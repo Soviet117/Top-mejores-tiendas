@@ -150,16 +150,16 @@
                     android:alignmentMode="alignMargins"
                     android:columnCount="2"
                     android:columnOrderPreserved="false"
-                    android:paddingHorizontal="4dp"
+                    android:paddingHorizontal="12dp"
                     android:paddingBottom="40dp">
 
-                    <!-- Repeatable Category Item (Simplifying for XML, logic in Java if needed) -->
                     <!-- Category 1: Restaurantes -->
                     <include
                         android:id="@+id/catRestaurantes"
                         layout="@layout/item_category_main"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_margin="12dp"
                         android:layout_columnWeight="1" />
 
                     <include
@@ -167,6 +167,7 @@
                         layout="@layout/item_category_main"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_margin="12dp"
                         android:layout_columnWeight="1" />
 
                     <include
@@ -174,6 +175,7 @@
                         layout="@layout/item_category_main"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_margin="12dp"
                         android:layout_columnWeight="1" />
 
                     <include
@@ -181,6 +183,7 @@
                         layout="@layout/item_category_main"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_margin="12dp"
                         android:layout_columnWeight="1" />
 
                     <include
@@ -188,6 +191,7 @@
                         layout="@layout/item_category_main"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_margin="12dp"
                         android:layout_columnWeight="1" />
 
                     <include
@@ -195,6 +199,7 @@
                         layout="@layout/item_category_main"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_margin="12dp"
                         android:layout_columnWeight="1" />
 
                 </GridLayout>
