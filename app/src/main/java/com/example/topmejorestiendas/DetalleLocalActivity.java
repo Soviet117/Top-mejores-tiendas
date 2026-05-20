@@ -70,6 +70,7 @@ public class DetalleLocalActivity extends AppCompatActivity {
                     binding.rvResenas.setAdapter(adapter);
 
                     // Lógica Dueño vs Cliente
+                    // El dueño PUEDE calificar otros negocios, pero no el suyo propio.
                     if (session.getUserId() == negocio.idDuenio) {
                         binding.btnCalificar.setVisibility(View.GONE);
                         binding.btnEditar.setVisibility(View.VISIBLE);

@@ -37,7 +37,8 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etNombreNegocio"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:textColor="@color/black" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
@@ -62,7 +63,8 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etDireccion"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:textColor="@color/black" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -74,7 +76,8 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etHorario"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:textColor="@color/black" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <Button
