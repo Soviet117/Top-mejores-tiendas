@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="12dp"
+    app:cardCornerRadius="28dp"
+    app:cardElevation="6dp"
+    app:strokeWidth="0dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- Contenedor cuadrado para la imagen -->
+        <ImageView
+            android:id="@+id/ivCatIcon"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:scaleType="centerCrop"
+            android:src="@android:drawable/ic_menu_gallery"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Overlay con degradado para legibilidad (Originalidad) -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@drawable/gradient_category"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/llLabel" />
+
+        <!-- Etiquetas de texto -->
+        <LinearLayout
+            android:id="@+id/llLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingBottom="12dp"
+            android:paddingTop="20dp"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <TextView
+                android:id="@+id/tvCatName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Categoría"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:shadowColor="#80000000"
+                android:shadowDx="1"
+                android:shadowDy="1"
+                android:shadowRadius="3" />
+
+            <TextView
+                android:id="@+id/tvCatCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 lugares"
+                android:textColor="#E0E0E0"
+                android:textSize="12sp"
+                android:textStyle="italic" />
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

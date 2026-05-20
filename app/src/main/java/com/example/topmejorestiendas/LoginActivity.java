@@ -55,7 +55,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void goToMain() {
-        startActivity(new Intent(this, RubrosActivity.class));
+        startActivity(new Intent(this, MainActivity.class));
         finish();
     }
 }

@@ -46,6 +46,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.cardview)
+    implementation(libs.androidx.swiperefreshlayout)
 
     // Room
     implementation(libs.androidx.room.runtime)
