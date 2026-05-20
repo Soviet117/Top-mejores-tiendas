@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center"
+    android:background="@color/colorBackground">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Elige tu tipo de cuenta"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="48dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnUsuarioCliente"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:text="Usuario Cliente"
+        android:textSize="18sp"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_marginBottom="16dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnDuenoNegocio"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:text="Dueño de Negocio"
+        android:textSize="18sp"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_marginBottom="32dp" />
+
+    <TextView
+        android:id="@+id/tvBackToLogin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="← Volver al login"
+        android:textColor="@color/colorSecondary" />
+
+</LinearLayout>
