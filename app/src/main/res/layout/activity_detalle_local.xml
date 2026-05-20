@@ -11,8 +11,9 @@
         android:orientation="vertical">
 
         <ImageView
+            android:id="@+id/ivFotoLocal"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
+            android:layout_height="220dp"
             android:src="@android:drawable/ic_menu_gallery"
             android:scaleType="centerCrop"
             android:background="#DDDDDD" />
@@ -24,29 +25,33 @@
             android:padding="16dp">
 
             <TextView
+                android:id="@+id/tvNombreNegocio"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="La Ferretería Central"
+                android:text="Nombre del Negocio"
                 android:textSize="28sp"
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tvCalificacionGeneral"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="⭐ 4.8 (48 reseñas)"
+                android:text="⭐ 0.0"
                 android:textColor="@color/colorPrimary"
                 android:layout_marginBottom="16dp" />
 
             <TextView
+                android:id="@+id/tvDireccion"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Dirección: Av. Principal 123"
+                android:text="Dirección: ..."
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tvHorario"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Horario: 08:00 - 18:00"
+                android:text="Horario: ..."
                 android:layout_marginBottom="16dp" />
 
             <Button
@@ -63,13 +68,15 @@
                 android:orientation="vertical"
                 android:visibility="gone">
                 <TextView
+                    android:id="@+id/tvTelefono"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Teléfono: +51 987 654 321" />
+                    android:text="Teléfono: ..." />
                 <TextView
+                    android:id="@+id/tvDescripcion"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Descripción: Somos la ferretería más grande del sector con más de 20 años de experiencia." />
+                    android:text="Descripción del negocio..." />
             </LinearLayout>
 
             <FrameLayout
@@ -81,15 +88,24 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Google Maps - Ubicación del local"
+                    android:text="Google Maps - Ubicación"
                     android:layout_gravity="center" />
             </FrameLayout>
 
             <Button
+                android:id="@+id/btnCalificar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Calificar este local"
-                android:layout_marginBottom="24dp" />
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnEditar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Editar información"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -99,67 +115,18 @@
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp" />
 
-            <!-- Reseña 1 -->
-            <androidx.cardview.widget.CardView
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvResenas"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                app:cardCornerRadius="8dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="12dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Juan Pérez"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Excelente atención y gran variedad de productos." />
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="⭐ 5/5"
-                        android:textColor="@color/colorPrimary" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Reseña 2 -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="8dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="12dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Maria Garcia"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Un poco caro pero de buena calidad." />
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="⭐ 4/5"
-                        android:textColor="@color/colorPrimary" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                android:nestedScrollingEnabled="false" />
 
             <Button
                 android:id="@+id/btnVolverRanking"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="← Volver"
+                android:layout_marginTop="16dp"
                 style="@style/Widget.Material3.Button.OutlinedButton" />
 
         </LinearLayout>
