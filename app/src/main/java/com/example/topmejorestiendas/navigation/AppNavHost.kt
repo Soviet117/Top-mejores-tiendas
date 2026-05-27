@@ -1,29 +1,100 @@
 package com.example.topmejorestiendas.navigation
 
+import android.app.Application
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.topmejorestiendas.feature.auth.ui.AuthViewModel
+import com.example.topmejorestiendas.feature.auth.ui.AuthViewModelFactory
+import com.example.topmejorestiendas.feature.auth.ui.LoginScreen
+import com.example.topmejorestiendas.feature.auth.ui.RegisterScreen
 import com.example.topmejorestiendas.feature.home.ui.HomeScreen
+import com.example.topmejorestiendas.feature.profile.ui.EditProfileScreen
+import com.example.topmejorestiendas.feature.profile.ui.ProfileScreen
+import com.example.topmejorestiendas.feature.profile.ui.ProfileViewModel
+import com.example.topmejorestiendas.feature.profile.ui.ProfileViewModelFactory
 
 @Composable
 fun AppNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    startDestination: String = "home"
+    startDestination: String = "login"
 ) {
+    val context = LocalContext.current.applicationContext as Application
+    val authViewModel: AuthViewModel = viewModel(factory = AuthViewModelFactory(context))
+    val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(context))
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
         modifier = modifier
     ) {
+        composable("login") {
+            LoginScreen(
+                viewModel = authViewModel,
+                onNavigateToHome = {
+                    navController.navigate("home") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
+                onNavigateToDashboard = {
+                    navController.navigate("dashboard") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
+                onNavigateToRegister = {
+                    navController.navigate("register")
+                }
+            )
+        }
+
+        composable("register") {
+            RegisterScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
         composable("home") {
+            // Se asume que HomeScreen tiene o tendrá forma de navegar al perfil.
             HomeScreen(
                 onNavigateToBusiness = { businessId ->
                     navController.navigate("business_profile/$businessId")
                 }
+            )
+        }
+
+        composable("dashboard") {
+            // Placeholder para Dashboard
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(text = "Dashboard del Dueño (En Construcción)")
+            }
+        }
+
+        composable("profile") {
+            ProfileScreen(
+                viewModel = profileViewModel,
+                onNavigateToEditProfile = { navController.navigate("edit_profile") },
+                onLogout = {
+                    navController.navigate("login") {
+                        popUpTo(0) // Limpiar todo el stack
+                    }
+                }
+            )
+        }
+
+        composable("edit_profile") {
+            EditProfileScreen(
+                viewModel = profileViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         
