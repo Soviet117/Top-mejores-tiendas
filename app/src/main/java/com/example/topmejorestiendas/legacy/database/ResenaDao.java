@@ -3,6 +3,7 @@ package com.example.topmejorestiendas.database;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
+import androidx.room.Update;
 import com.example.topmejorestiendas.model.Resena;
 import java.util.List;
 
@@ -16,6 +17,9 @@ public interface ResenaDao {
 
     @Query("SELECT AVG(calificacion) FROM resenas WHERE idNegocio = :idNegocio")
     float obtenerPromedio(int idNegocio);
+
+    @Update
+    void actualizar(Resena resena);
 
     @Query("DELETE FROM resenas")
     void eliminarTodos();

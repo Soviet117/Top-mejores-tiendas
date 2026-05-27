@@ -12,6 +12,7 @@ public class Resena {
     public int calificacion;
     public String comentario;
     public long fecha;
+    public String respuestaDuenio;
 
     public Resena(int idUsuario, int idNegocio, int calificacion, String comentario, long fecha) {
         this.idUsuario = idUsuario;
@@ -19,5 +20,6 @@ public class Resena {
         this.calificacion = calificacion;
         this.comentario = comentario;
         this.fecha = fecha;
+        this.respuestaDuenio = null;
     }
 }

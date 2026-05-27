@@ -26,7 +26,7 @@ fun ProfileScreen(
     onNavigateToEditProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
-    val user by viewModel.userState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -43,7 +43,7 @@ fun ProfileScreen(
             )
         },
         floatingActionButton = {
-            if (user != null) {
+            if (uiState is ProfileUiState.Success) {
                 FloatingActionButton(onClick = onNavigateToEditProfile) {
                     Icon(Icons.Default.Edit, contentDescription = "Editar Perfil")
                 }
@@ -51,60 +51,80 @@ fun ProfileScreen(
         }
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            if (user == null) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // Profile Photo
-                    if (user!!.profilePhotoUrl.isNotEmpty()) {
-                        AsyncImage(
-                            model = user!!.profilePhotoUrl,
-                            contentDescription = "Foto de perfil",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(120.dp)
-                                .clip(CircleShape)
+            when (uiState) {
+                is ProfileUiState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+                is ProfileUiState.Error -> {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = (uiState as ProfileUiState.Error).message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyLarge
                         )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .size(120.dp)
-                                .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = user!!.fullName.firstOrNull()?.toString()?.uppercase() ?: "?",
-                                style = MaterialTheme.typography.displayMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = onLogout) {
+                            Text("Volver a iniciar sesión")
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Text(
-                        text = user!!.fullName,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = if (user!!.isOwner) "Cuenta de Dueño" else "Cuenta de Cliente",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
-                    )
-
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                }
+                is ProfileUiState.Success -> {
+                    val user = (uiState as ProfileUiState.Success).user
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            ProfileInfoRow(icon = Icons.Default.Email, label = "Correo", value = user!!.email)
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-                            ProfileInfoRow(icon = Icons.Default.Phone, label = "Teléfono", value = user!!.phone.ifEmpty { "No especificado" })
+                        // Profile Photo
+                        if (user.profilePhotoUrl.isNotEmpty()) {
+                            AsyncImage(
+                                model = user.profilePhotoUrl,
+                                contentDescription = "Foto de perfil",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(120.dp)
+                                    .clip(CircleShape)
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(120.dp)
+                                    .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = user.fullName.firstOrNull()?.toString()?.uppercase() ?: "?",
+                                    style = MaterialTheme.typography.displayMedium,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Text(
+                            text = user.fullName,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = if (user.isOwner) "Cuenta de Dueño" else "Cuenta de Cliente",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
+                        )
+
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                ProfileInfoRow(icon = Icons.Default.Email, label = "Correo", value = user.email)
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                                ProfileInfoRow(icon = Icons.Default.Phone, label = "Teléfono", value = user.phone.ifEmpty { "No especificado" })
+                            }
                         }
                     }
                 }

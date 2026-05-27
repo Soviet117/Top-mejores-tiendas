@@ -23,6 +23,15 @@ import com.example.topmejorestiendas.feature.dashboard.ui.AddBusinessViewModelFa
 import com.example.topmejorestiendas.feature.dashboard.ui.OwnerDashboardScreen
 import com.example.topmejorestiendas.feature.dashboard.ui.OwnerDashboardViewModel
 import com.example.topmejorestiendas.feature.dashboard.ui.OwnerDashboardViewModelFactory
+import com.example.topmejorestiendas.feature.dashboard.ui.ManageBusinessScreen
+import com.example.topmejorestiendas.feature.dashboard.ui.ManageBusinessViewModel
+import com.example.topmejorestiendas.feature.dashboard.ui.ManageBusinessViewModelFactory
+import com.example.topmejorestiendas.feature.dashboard.ui.EditBusinessScreen
+import com.example.topmejorestiendas.feature.dashboard.ui.EditBusinessViewModel
+import com.example.topmejorestiendas.feature.dashboard.ui.EditBusinessViewModelFactory
+import com.example.topmejorestiendas.feature.dashboard.ui.BusinessReviewsScreen
+import com.example.topmejorestiendas.feature.dashboard.ui.BusinessReviewsViewModel
+import com.example.topmejorestiendas.feature.dashboard.ui.BusinessReviewsViewModelFactory
 import com.example.topmejorestiendas.feature.home.ui.HomeScreen
 import com.example.topmejorestiendas.feature.profile.ui.EditProfileScreen
 import com.example.topmejorestiendas.feature.profile.ui.ProfileScreen
@@ -40,6 +49,10 @@ fun AppNavHost(
     val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(context))
     val ownerDashboardViewModel: OwnerDashboardViewModel = viewModel(factory = OwnerDashboardViewModelFactory(context))
     val addBusinessViewModel: AddBusinessViewModel = viewModel(factory = AddBusinessViewModelFactory(context))
+    
+    val manageBusinessViewModel: ManageBusinessViewModel = viewModel(factory = ManageBusinessViewModelFactory(context))
+    val editBusinessViewModel: EditBusinessViewModel = viewModel(factory = EditBusinessViewModelFactory(context))
+    val businessReviewsViewModel: BusinessReviewsViewModel = viewModel(factory = BusinessReviewsViewModelFactory(context))
 
     NavHost(
         navController = navController,
@@ -101,8 +114,37 @@ fun AppNavHost(
                 onNavigateToProfile = { navController.navigate("profile") },
                 onNavigateToAddBusiness = { navController.navigate("add_business") },
                 onNavigateToBusinessDetail = { businessId -> 
-                    navController.navigate("business_profile/$businessId") 
+                    navController.navigate("manage_business/$businessId") 
                 }
+            )
+        }
+
+        composable("manage_business/{businessId}") { backStackEntry ->
+            val businessId = backStackEntry.arguments?.getString("businessId") ?: ""
+            ManageBusinessScreen(
+                businessId = businessId,
+                viewModel = manageBusinessViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToEditBusiness = { id -> navController.navigate("edit_business/$id") },
+                onNavigateToReviews = { id -> navController.navigate("business_reviews/$id") }
+            )
+        }
+
+        composable("edit_business/{businessId}") { backStackEntry ->
+            val businessId = backStackEntry.arguments?.getString("businessId") ?: ""
+            EditBusinessScreen(
+                businessId = businessId,
+                viewModel = editBusinessViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable("business_reviews/{businessId}") { backStackEntry ->
+            val businessId = backStackEntry.arguments?.getString("businessId") ?: ""
+            BusinessReviewsScreen(
+                businessId = businessId,
+                viewModel = businessReviewsViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

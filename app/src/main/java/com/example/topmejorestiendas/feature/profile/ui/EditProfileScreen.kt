@@ -32,19 +32,27 @@ fun EditProfileScreen(
     viewModel: ProfileViewModel,
     onNavigateBack: () -> Unit
 ) {
-    val user by viewModel.userState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    
+    // We only proceed if we have a success state, otherwise we can show a loader or just pop back
+    if (uiState !is ProfileUiState.Success) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+    
+    val user = (uiState as ProfileUiState.Success).user
 
-    var name by remember { mutableStateOf(user?.fullName ?: "") }
-    var phone by remember { mutableStateOf(user?.phone ?: "") }
-    var photoUri by remember { mutableStateOf<Uri?>(if (user?.profilePhotoUrl?.isNotEmpty() == true) Uri.parse(user!!.profilePhotoUrl) else null) }
+    var name by remember { mutableStateOf(user.fullName) }
+    var phone by remember { mutableStateOf(user.phone) }
+    var photoUri by remember { mutableStateOf<Uri?>(if (user.profilePhotoUrl.isNotEmpty()) Uri.parse(user.profilePhotoUrl) else null) }
 
     LaunchedEffect(user) {
-        if (user != null) {
-            name = user!!.fullName
-            phone = user!!.phone
-            if (user!!.profilePhotoUrl.isNotEmpty()) {
-                photoUri = Uri.parse(user!!.profilePhotoUrl)
-            }
+        name = user.fullName
+        phone = user.phone
+        if (user.profilePhotoUrl.isNotEmpty()) {
+            photoUri = Uri.parse(user.profilePhotoUrl)
         }
     }
 

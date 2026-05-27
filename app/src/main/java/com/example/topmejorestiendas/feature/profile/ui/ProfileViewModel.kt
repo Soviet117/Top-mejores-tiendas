@@ -15,13 +15,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+sealed class ProfileUiState {
+    object Loading : ProfileUiState()
+    data class Success(val user: User) : ProfileUiState()
+    data class Error(val message: String) : ProfileUiState()
+}
+
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = AppDatabase.getInstance(application)
     private val sessionManager = SessionManager(application)
 
-    private val _userState = MutableStateFlow<User?>(null)
-    val userState: StateFlow<User?> = _userState.asStateFlow()
+    private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
+    val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
     init {
         loadUserProfile()
@@ -34,22 +40,33 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 val usuarioEntity = db.usuarioDao().obtenerPorId(userId)
                 withContext(Dispatchers.Main) {
                     if (usuarioEntity != null) {
-                        _userState.value = User(
-                            id = usuarioEntity.id,
-                            fullName = usuarioEntity.nombreCompleto ?: "",
-                            email = usuarioEntity.email ?: "",
-                            phone = usuarioEntity.telefono ?: "",
-                            profilePhotoUrl = usuarioEntity.fotoPerfil ?: "",
-                            isOwner = usuarioEntity.esDuenio
+                        _uiState.value = ProfileUiState.Success(
+                            User(
+                                id = usuarioEntity.id,
+                                fullName = usuarioEntity.nombreCompleto ?: "",
+                                email = usuarioEntity.email ?: "",
+                                phone = usuarioEntity.telefono ?: "",
+                                profilePhotoUrl = usuarioEntity.fotoPerfil ?: "",
+                                isOwner = usuarioEntity.esDuenio
+                            )
                         )
+                    } else {
+                        _uiState.value = ProfileUiState.Error("Usuario no encontrado en la base de datos.")
                     }
                 }
             }
+        } else {
+            _uiState.value = ProfileUiState.Error("Sesión inválida o expirada.")
         }
     }
 
     fun updateUser(fullName: String, phone: String, photoUrl: String, onComplete: () -> Unit) {
-        val currentUser = _userState.value ?: return
+        val currentState = _uiState.value
+        if (currentState !is ProfileUiState.Success) return
+        
+        val currentUser = currentState.user
+        _uiState.value = ProfileUiState.Loading
+        
         viewModelScope.launch(Dispatchers.IO) {
             val usuarioEntity = db.usuarioDao().obtenerPorId(currentUser.id)
             if (usuarioEntity != null) {
@@ -59,12 +76,18 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 db.usuarioDao().actualizar(usuarioEntity)
                 
                 withContext(Dispatchers.Main) {
-                    _userState.value = currentUser.copy(
-                        fullName = fullName,
-                        phone = phone,
-                        profilePhotoUrl = photoUrl
+                    _uiState.value = ProfileUiState.Success(
+                        currentUser.copy(
+                            fullName = fullName,
+                            phone = phone,
+                            profilePhotoUrl = photoUrl
+                        )
                     )
                     onComplete()
+                }
+            } else {
+                withContext(Dispatchers.Main) {
+                    _uiState.value = ProfileUiState.Error("No se pudo actualizar el perfil.")
                 }
             }
         }
