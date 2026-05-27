@@ -29,7 +29,10 @@ fun AppNavHost(
         
         composable("business_profile/{businessId}") { backStackEntry ->
             val businessId = backStackEntry.arguments?.getString("businessId")
-            // Placeholder: BusinessProfileScreen(businessId)
+            com.example.topmejorestiendas.feature.business.ui.BusinessProfileScreen(
+                businessId = businessId,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }
