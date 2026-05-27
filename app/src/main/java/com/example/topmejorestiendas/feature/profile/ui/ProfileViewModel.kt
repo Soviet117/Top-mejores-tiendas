@@ -33,7 +33,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         loadUserProfile()
     }
 
-    private fun loadUserProfile() {
+    fun loadUserProfile() {
         val userId = sessionManager.userId
         if (userId != -1) {
             viewModelScope.launch(Dispatchers.IO) {
@@ -95,6 +95,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
     fun logout() {
         sessionManager.logout()
+        _uiState.value = ProfileUiState.Loading
     }
 }
 

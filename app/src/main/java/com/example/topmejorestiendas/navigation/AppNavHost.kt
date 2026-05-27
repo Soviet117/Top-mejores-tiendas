@@ -160,6 +160,7 @@ fun AppNavHost(
                 viewModel = profileViewModel,
                 onNavigateToEditProfile = { navController.navigate("edit_profile") },
                 onLogout = {
+                    authViewModel.logout()
                     navController.navigate("login") {
                         popUpTo(0) // Limpiar todo el stack
                     }
