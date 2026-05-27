@@ -17,6 +17,12 @@ import com.example.topmejorestiendas.feature.auth.ui.AuthViewModel
 import com.example.topmejorestiendas.feature.auth.ui.AuthViewModelFactory
 import com.example.topmejorestiendas.feature.auth.ui.LoginScreen
 import com.example.topmejorestiendas.feature.auth.ui.RegisterScreen
+import com.example.topmejorestiendas.feature.dashboard.ui.AddBusinessScreen
+import com.example.topmejorestiendas.feature.dashboard.ui.AddBusinessViewModel
+import com.example.topmejorestiendas.feature.dashboard.ui.AddBusinessViewModelFactory
+import com.example.topmejorestiendas.feature.dashboard.ui.OwnerDashboardScreen
+import com.example.topmejorestiendas.feature.dashboard.ui.OwnerDashboardViewModel
+import com.example.topmejorestiendas.feature.dashboard.ui.OwnerDashboardViewModelFactory
 import com.example.topmejorestiendas.feature.home.ui.HomeScreen
 import com.example.topmejorestiendas.feature.profile.ui.EditProfileScreen
 import com.example.topmejorestiendas.feature.profile.ui.ProfileScreen
@@ -32,6 +38,8 @@ fun AppNavHost(
     val context = LocalContext.current.applicationContext as Application
     val authViewModel: AuthViewModel = viewModel(factory = AuthViewModelFactory(context))
     val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(context))
+    val ownerDashboardViewModel: OwnerDashboardViewModel = viewModel(factory = OwnerDashboardViewModelFactory(context))
+    val addBusinessViewModel: AddBusinessViewModel = viewModel(factory = AddBusinessViewModelFactory(context))
 
     NavHost(
         navController = navController,
@@ -59,24 +67,50 @@ fun AppNavHost(
 
         composable("register") {
             RegisterScreen(
+                viewModel = authViewModel,
+                onNavigateToHome = {
+                    navController.navigate("home") {
+                        popUpTo("register") { inclusive = true }
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
+                onNavigateToDashboard = {
+                    navController.navigate("dashboard") {
+                        popUpTo("register") { inclusive = true }
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
                 onNavigateBack = { navController.popBackStack() }
             )
         }
 
         composable("home") {
-            // Se asume que HomeScreen tiene o tendrá forma de navegar al perfil.
             HomeScreen(
                 onNavigateToBusiness = { businessId ->
                     navController.navigate("business_profile/$businessId")
+                },
+                onNavigateToProfile = {
+                    navController.navigate("profile")
                 }
             )
         }
 
         composable("dashboard") {
-            // Placeholder para Dashboard
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "Dashboard del Dueño (En Construcción)")
-            }
+            OwnerDashboardScreen(
+                viewModel = ownerDashboardViewModel,
+                onNavigateToProfile = { navController.navigate("profile") },
+                onNavigateToAddBusiness = { navController.navigate("add_business") },
+                onNavigateToBusinessDetail = { businessId -> 
+                    navController.navigate("business_profile/$businessId") 
+                }
+            )
+        }
+
+        composable("add_business") {
+            AddBusinessScreen(
+                viewModel = addBusinessViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable("profile") {

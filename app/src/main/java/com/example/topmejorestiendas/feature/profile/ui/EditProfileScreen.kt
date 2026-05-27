@@ -1,21 +1,30 @@
 package com.example.topmejorestiendas.feature.profile.ui
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,14 +36,22 @@ fun EditProfileScreen(
 
     var name by remember { mutableStateOf(user?.fullName ?: "") }
     var phone by remember { mutableStateOf(user?.phone ?: "") }
-    var photoUrl by remember { mutableStateOf(user?.profilePhotoUrl ?: "") }
+    var photoUri by remember { mutableStateOf<Uri?>(if (user?.profilePhotoUrl?.isNotEmpty() == true) Uri.parse(user!!.profilePhotoUrl) else null) }
 
     LaunchedEffect(user) {
         if (user != null) {
             name = user!!.fullName
             phone = user!!.phone
-            photoUrl = user!!.profilePhotoUrl
+            if (user!!.profilePhotoUrl.isNotEmpty()) {
+                photoUri = Uri.parse(user!!.profilePhotoUrl)
+            }
         }
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { photoUri = it }
     }
 
     Scaffold(
@@ -57,6 +74,40 @@ fun EditProfileScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            
+            // Selector de Imagen de Perfil
+            Box(
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable { launcher.launch("image/*") },
+                contentAlignment = Alignment.Center
+            ) {
+                if (photoUri != null) {
+                    AsyncImage(
+                        model = photoUri,
+                        contentDescription = "Foto seleccionada",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.CameraAlt,
+                        contentDescription = "Seleccionar foto",
+                        modifier = Modifier.size(40.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            TextButton(onClick = { launcher.launch("image/*") }) {
+                Text("Cambiar foto de perfil")
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
@@ -78,30 +129,11 @@ fun EditProfileScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = photoUrl,
-                onValueChange = { photoUrl = it },
-                label = { Text("URL de la Foto de Perfil") },
-                leadingIcon = { Icon(Icons.Default.Image, contentDescription = null) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-            
-            Text(
-                text = "Por ahora, ingresa una URL de imagen válida para tu foto.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp).align(Alignment.Start)
-            )
-
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
                 onClick = {
-                    viewModel.updateUser(name, phone, photoUrl) {
+                    viewModel.updateUser(name, phone, photoUri?.toString() ?: "") {
                         onNavigateBack()
                     }
                 },

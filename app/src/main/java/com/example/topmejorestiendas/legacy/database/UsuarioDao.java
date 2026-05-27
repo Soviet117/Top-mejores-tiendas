@@ -22,4 +22,7 @@ public interface UsuarioDao {
 
     @Update
     void actualizar(Usuario usuario);
+
+    @Query("DELETE FROM usuarios")
+    void eliminarTodos();
 }

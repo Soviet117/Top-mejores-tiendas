@@ -21,13 +21,29 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun RegisterScreen(
+    viewModel: AuthViewModel,
+    onNavigateToHome: () -> Unit,
+    onNavigateToDashboard: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isOwner by remember { mutableStateOf(false) }
+
+    // Navigation logic based on login/register success
+    LaunchedEffect(uiState.user) {
+        uiState.user?.let { user ->
+            if (user.isOwner) {
+                onNavigateToDashboard()
+            } else {
+                onNavigateToHome()
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -52,7 +68,7 @@ fun RegisterScreen(
 
         OutlinedTextField(
             value = name,
-            onValueChange = { name = it },
+            onValueChange = { name = it; viewModel.clearError() },
             label = { Text("Nombre Completo") },
             leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
             singleLine = true,
@@ -63,7 +79,7 @@ fun RegisterScreen(
 
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it },
+            onValueChange = { email = it; viewModel.clearError() },
             label = { Text("Correo electrónico") },
             leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
@@ -75,7 +91,7 @@ fun RegisterScreen(
 
         OutlinedTextField(
             value = phone,
-            onValueChange = { phone = it },
+            onValueChange = { phone = it; viewModel.clearError() },
             label = { Text("Teléfono") },
             leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
@@ -87,7 +103,7 @@ fun RegisterScreen(
 
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = { password = it; viewModel.clearError() },
             label = { Text("Contraseña") },
             leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
             visualTransformation = PasswordVisualTransformation(),
@@ -95,6 +111,17 @@ fun RegisterScreen(
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
+
+        if (uiState.error != null) {
+            Text(
+                text = uiState.error!!,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .align(Alignment.Start)
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -126,12 +153,21 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = { /* TODO: Implement register logic */ },
+            onClick = { viewModel.register(name, email, phone, password, isOwner) },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp)
+                .height(50.dp),
+            enabled = !uiState.isLoading
         ) {
-            Text("Registrarse")
+            if (uiState.isLoading) {
+                CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text("Registrarse")
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))

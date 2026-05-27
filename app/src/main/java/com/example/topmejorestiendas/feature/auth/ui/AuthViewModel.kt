@@ -91,6 +91,72 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun register(name: String, email: String, phone: String, pass: String, isOwner: Boolean) {
+        if (name.isBlank() || email.isBlank() || pass.isBlank()) {
+            _uiState.value = _uiState.value.copy(error = "Completa los campos obligatorios")
+            return
+        }
+
+        _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // Verificar si ya existe el usuario
+                val existingUser = db.usuarioDao().obtenerPorEmail(email)
+                if (existingUser != null) {
+                    withContext(Dispatchers.Main) {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            error = "El correo ya está registrado"
+                        )
+                    }
+                    return@launch
+                }
+
+                val newUser = com.example.topmejorestiendas.model.Usuario(
+                    name,
+                    email,
+                    pass,
+                    phone,
+                    "",
+                    isOwner
+                )
+                val newId = db.usuarioDao().registrar(newUser)
+                
+                withContext(Dispatchers.Main) {
+                    if (newId > 0) {
+                        sessionManager.createLoginSession(newId.toInt())
+                        val domainUser = User(
+                            id = newId.toInt(),
+                            fullName = name,
+                            email = email,
+                            phone = phone,
+                            profilePhotoUrl = "",
+                            isOwner = isOwner
+                        )
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            user = domainUser,
+                            isLoggedIn = true
+                        )
+                    } else {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            error = "No se pudo registrar el usuario"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = "Error inesperado: ${e.message}"
+                    )
+                }
+            }
+        }
+    }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }

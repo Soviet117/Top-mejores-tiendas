@@ -11,7 +11,7 @@ import com.example.topmejorestiendas.model.Resena;
 import com.example.topmejorestiendas.model.Usuario;
 import java.util.concurrent.Executors;
 
-@Database(entities = {Usuario.class, Negocio.class, Resena.class}, version = 2)
+@Database(entities = {Usuario.class, Negocio.class, Resena.class}, version = 3)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract UsuarioDao usuarioDao();
     public abstract NegocioDao negocioDao();
@@ -43,6 +43,9 @@ public abstract class AppDatabase extends RoomDatabase {
     }
 
     private static void prepopulateData(AppDatabase db) {
+        db.usuarioDao().eliminarTodos();
+        db.negocioDao().eliminarTodos();
+        db.resenaDao().eliminarTodos();
         // Base de datos vacía para empezar de cero según lo solicitado
     }
 }

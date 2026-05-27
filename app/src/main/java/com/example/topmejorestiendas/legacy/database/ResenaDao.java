@@ -16,4 +16,7 @@ public interface ResenaDao {
 
     @Query("SELECT AVG(calificacion) FROM resenas WHERE idNegocio = :idNegocio")
     float obtenerPromedio(int idNegocio);
+
+    @Query("DELETE FROM resenas")
+    void eliminarTodos();
 }

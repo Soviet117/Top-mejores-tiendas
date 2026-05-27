@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.Fastfood
 import androidx.compose.material.icons.filled.LocalOffer
@@ -21,7 +22,8 @@ import com.example.topmejorestiendas.core.domain.model.Business
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onNavigateToBusiness: (String) -> Unit
+    onNavigateToBusiness: (String) -> Unit,
+    onNavigateToProfile: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
     
@@ -59,6 +61,9 @@ fun HomeScreen(
                 TopAppBar(
                     title = { Text("Top Tiendas") },
                     actions = {
+                        IconButton(onClick = onNavigateToProfile) {
+                            Icon(Icons.Default.AccountCircle, contentDescription = "Mi Perfil")
+                        }
                         IconButton(onClick = { /* TODO: Toggle Map View */ }) {
                             Icon(Icons.Default.Map, contentDescription = "Ver Mapa")
                         }

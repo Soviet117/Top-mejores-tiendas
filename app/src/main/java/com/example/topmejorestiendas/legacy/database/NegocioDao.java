@@ -29,4 +29,7 @@ public interface NegocioDao {
 
     @Update
     void actualizar(Negocio negocio);
+
+    @Query("DELETE FROM negocios")
+    void eliminarTodos();
 }
