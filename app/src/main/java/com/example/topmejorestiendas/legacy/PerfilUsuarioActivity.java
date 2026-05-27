@@ -56,8 +56,8 @@ public class PerfilUsuarioActivity extends AppCompatActivity {
         });
 
         binding.btnMisNegocios.setOnClickListener(v -> {
-            // Ir a Mis Negocios (podría ser la misma RankingActivity filtrada o una nueva)
-            Toast.makeText(this, "Funcionalidad de Mis Negocios próximamente", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, MisNegociosActivity.class);
+            startActivity(intent);
         });
     }
 

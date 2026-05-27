@@ -28,6 +28,84 @@
             android:background="#EEEEEE"
             android:layout_marginBottom="24dp" />
 
+        <!-- Datos del Dueño (Cuenta de Usuario) -->
+        <TextView
+            android:id="@+id/tvDatosDuenioHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Datos de la Cuenta"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilNombreDuenio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Tu Nombre Completo"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_marginBottom="12dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etNombreDuenio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/black" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilEmailDuenio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Email (será tu usuario)"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_marginBottom="12dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etEmailDuenio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textEmailAddress"
+                android:textColor="@color/black" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilPasswordDuenio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Contraseña"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_marginBottom="12dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPasswordDuenio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"
+                android:textColor="@color/black" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilTelefonoDuenio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Teléfono de contacto"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_marginBottom="24dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etTelefonoDuenio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="phone"
+                android:textColor="@color/black" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Datos del Negocio -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Datos del Negocio"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -72,12 +150,28 @@
             android:layout_height="wrap_content"
             android:hint="Horario"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="12dp">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etHorario"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/black" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Descripción"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_marginBottom="24dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etDescripcion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/black"
+                android:gravity="top"
+                android:inputType="textMultiLine"
+                android:lines="3" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <Button

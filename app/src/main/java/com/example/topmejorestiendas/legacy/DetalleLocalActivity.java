@@ -1,5 +1,6 @@
 package com.example.topmejorestiendas;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -47,7 +48,18 @@ public class DetalleLocalActivity extends AppCompatActivity {
         });
 
         binding.btnCalificar.setOnClickListener(v -> mostrarDialogoCalificar());
+        binding.btnEditar.setOnClickListener(v -> {
+            Intent intent = new Intent(this, RegistroLocalActivity.class);
+            intent.putExtra("NEGOCIO_ID", negocioId);
+            startActivity(intent);
+        });
         binding.btnVolverRanking.setOnClickListener(v -> finish());
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        cargarDetalle();
     }
 
     private void cargarDetalle() {
@@ -61,6 +73,7 @@ public class DetalleLocalActivity extends AppCompatActivity {
                     binding.tvCalificacionGeneral.setText("⭐ " + negocio.calificacionPromedio);
                     binding.tvDireccion.setText("Dirección: " + negocio.direccion);
                     binding.tvHorario.setText("Horario: " + negocio.horario);
+                    binding.tvDescripcion.setText(negocio.descripcion != null ? negocio.descripcion : "Sin descripción.");
                     
                     if (negocio.fotoNegocio != null) {
                         Glide.with(this).load(new File(negocio.fotoNegocio)).into(binding.ivFotoLocal);

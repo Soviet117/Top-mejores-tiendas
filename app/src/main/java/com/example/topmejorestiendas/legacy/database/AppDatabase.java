@@ -43,23 +43,6 @@ public abstract class AppDatabase extends RoomDatabase {
     }
 
     private static void prepopulateData(AppDatabase db) {
-        // Solo 2 cuentas como solicitaste
-        Usuario cliente = new Usuario("Cliente de Prueba", "cliente@test.com", "123456", "999000111", null, false);
-        Usuario duenio = new Usuario("Dueño de Prueba", "duenio@test.com", "123456", "999000222", null, true);
-        
-        db.usuarioDao().registrar(cliente);
-        long duenioId = db.usuarioDao().registrar(duenio);
-
-        // Negocio inicial para el dueño
-        Negocio n1 = new Negocio("Ferretería Central", "Ferreterías", "Calle Ejemplo 123", "08:00 - 19:00", null, (int) duenioId);
-        long n1Id = db.negocioDao().insertar(n1);
-
-        // Reseñas iniciales
-        db.resenaDao().insertar(new Resena(1, (int) n1Id, 5, "Excelente atención, muy recomendado.", System.currentTimeMillis()));
-        db.resenaDao().insertar(new Resena(1, (int) n1Id, 4, "Buenos precios, regresaré pronto.", System.currentTimeMillis()));
-        
-        n1.calificacionPromedio = 4.5f;
-        n1.id = (int) n1Id;
-        db.negocioDao().actualizar(n1);
+        // Base de datos vacía para empezar de cero según lo solicitado
     }
 }

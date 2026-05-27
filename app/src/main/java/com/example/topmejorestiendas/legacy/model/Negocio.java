@@ -15,14 +15,16 @@ public class Negocio {
     public double latitud;
     public double longitud;
     public String fotoNegocio;
+    public String descripcion;
     public int idDuenio;
 
-    public Negocio(String nombreNegocio, String rubro, String direccion, String horario, String fotoNegocio, int idDuenio) {
+    public Negocio(String nombreNegocio, String rubro, String direccion, String horario, String fotoNegocio, String descripcion, int idDuenio) {
         this.nombreNegocio = nombreNegocio;
         this.rubro = rubro;
         this.direccion = direccion;
         this.horario = horario;
         this.fotoNegocio = fotoNegocio;
+        this.descripcion = descripcion;
         this.idDuenio = idDuenio;
         this.calificacionPromedio = 0;
     }

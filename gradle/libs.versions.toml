@@ -16,6 +16,8 @@ cardview = "1.0.0"
 swiperefreshlayout = "1.1.0"
 room = "2.6.1"
 glide = "4.16.0"
+navigationCompose = "2.8.5"
+coilCompose = "2.6.0"
 
 [libraries]
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
@@ -42,8 +44,12 @@ androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "u
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilCompose" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 
