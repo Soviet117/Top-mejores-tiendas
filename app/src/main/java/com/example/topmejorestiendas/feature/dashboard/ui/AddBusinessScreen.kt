@@ -40,7 +40,20 @@ fun AddBusinessScreen(
     var name by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
-    var schedule by remember { mutableStateOf("") }
+    
+    val scheduleState = remember {
+        listOf(
+            "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"
+        ).map { day ->
+            ScheduleDayState(
+                name = day,
+                isOpen = mutableStateOf(day != "Domingo"), // Domingo cerrado por defecto
+                openTime = mutableStateOf("08:00"),
+                closeTime = mutableStateOf("18:00")
+            )
+        }
+    }
+
     var description by remember { mutableStateOf("") }
     var photoUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -140,16 +153,24 @@ fun AddBusinessScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = schedule,
-                onValueChange = { schedule = it; viewModel.clearError() },
-                label = { Text("Horario (Ej: Lun-Vie 08:00 - 20:00)") },
-                leadingIcon = { Icon(Icons.Default.Schedule, contentDescription = null) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "Horario de Atención",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.Start)
             )
+            Spacer(modifier = Modifier.height(8.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    scheduleState.forEach { dayState ->
+                        ScheduleRow(dayState)
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -177,8 +198,15 @@ fun AddBusinessScreen(
 
             Button(
                 onClick = {
+                    val finalSchedule = scheduleState.joinToString(", ") { state ->
+                        if (state.isOpen.value) {
+                            "${state.name.take(3)}: ${state.openTime.value}-${state.closeTime.value}"
+                        } else {
+                            "${state.name.take(3)}: Cerrado"
+                        }
+                    }
                     viewModel.registerBusiness(
-                        name, category, address, schedule, description, photoUri?.toString() ?: ""
+                        name, category, address, finalSchedule, description, photoUri?.toString() ?: ""
                     )
                 },
                 modifier = Modifier
@@ -196,6 +224,57 @@ fun AddBusinessScreen(
                     Text("Guardar Local")
                 }
             }
+        }
+    }
+}
+
+data class ScheduleDayState(
+    val name: String,
+    val isOpen: MutableState<Boolean>,
+    val openTime: MutableState<String>,
+    val closeTime: MutableState<String>
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ScheduleRow(state: ScheduleDayState) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+    ) {
+        Switch(
+            checked = state.isOpen.value,
+            onCheckedChange = { state.isOpen.value = it }
+        )
+        Text(
+            text = state.name.take(3), // Lun, Mar, Mie...
+            modifier = Modifier.width(48.dp).padding(start = 8.dp),
+            fontWeight = FontWeight.Bold
+        )
+        
+        if (state.isOpen.value) {
+            OutlinedTextField(
+                value = state.openTime.value,
+                onValueChange = { state.openTime.value = it },
+                modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodySmall
+            )
+            Text("-")
+            OutlinedTextField(
+                value = state.closeTime.value,
+                onValueChange = { state.closeTime.value = it },
+                modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodySmall
+            )
+        } else {
+            Text(
+                text = "Cerrado",
+                modifier = Modifier.weight(2f).padding(start = 16.dp),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }

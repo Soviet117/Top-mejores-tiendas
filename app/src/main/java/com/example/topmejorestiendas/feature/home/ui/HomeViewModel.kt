@@ -64,8 +64,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
                 // Mapear al modelo de UI
                 val mappedBusinesses = dbNegocios.map { negocio ->
-                    val reviewsCount = resenaDao.obtenerPorNegocio(negocio.id).size
-                    negocio.toDomainModel(reviewsCount)
+                    val reviews = resenaDao.obtenerPorNegocio(negocio.id)
+                    negocio.toDomainModel(reviews)
                 }
 
                 originalList = mappedBusinesses

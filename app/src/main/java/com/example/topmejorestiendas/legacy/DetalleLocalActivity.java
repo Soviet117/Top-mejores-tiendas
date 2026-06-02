@@ -119,7 +119,7 @@ public class DetalleLocalActivity extends AppCompatActivity {
 
     private void guardarResena(int calif, String com) {
         Executors.newSingleThreadExecutor().execute(() -> {
-            Resena r = new Resena(session.getUserId(), negocioId, calif, com, System.currentTimeMillis());
+            Resena r = new Resena(session.getUserId(), negocioId, calif, calif, calif, calif, com, System.currentTimeMillis());
             db.resenaDao().insertar(r);
             
             float nuevoPromedio = db.resenaDao().obtenerPromedio(negocioId);

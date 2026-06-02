@@ -167,7 +167,7 @@ public class RegistroLocalActivity extends AppCompatActivity {
             }
 
             // 2. Crear la cuenta de Usuario (Dueño)
-            Usuario nuevoDuenio = new Usuario(nombreDuenio, emailDuenio, passwordDuenio, telefonoDuenio, null, true);
+            Usuario nuevoDuenio = new Usuario(nombreDuenio, emailDuenio, passwordDuenio, telefonoDuenio, null, true, null);
             long idDuenio = db.usuarioDao().registrar(nuevoDuenio);
 
             // 3. Crear el Negocio asociado al nuevo idDuenio

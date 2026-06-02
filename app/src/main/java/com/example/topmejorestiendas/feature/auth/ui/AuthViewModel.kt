@@ -66,7 +66,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             email = usuarioEntity.email ?: "",
                             phone = usuarioEntity.telefono ?: "",
                             profilePhotoUrl = usuarioEntity.fotoPerfil ?: "",
-                            isOwner = usuarioEntity.esDuenio
+                            isOwner = usuarioEntity.esDuenio,
+                            ruc = usuarioEntity.ruc
                         )
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
@@ -91,7 +92,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun register(name: String, email: String, phone: String, pass: String, isOwner: Boolean) {
+    fun register(name: String, email: String, phone: String, pass: String, isOwner: Boolean, ruc: String) {
         if (name.isBlank() || email.isBlank() || pass.isBlank()) {
             _uiState.value = _uiState.value.copy(error = "Completa los campos obligatorios")
             return
@@ -119,7 +120,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     pass,
                     phone,
                     "",
-                    isOwner
+                    isOwner,
+                    if (isOwner) ruc else null
                 )
                 val newId = db.usuarioDao().registrar(newUser)
                 
@@ -132,7 +134,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             email = email,
                             phone = phone,
                             profilePhotoUrl = "",
-                            isOwner = isOwner
+                            isOwner = isOwner,
+                            ruc = if (isOwner) ruc else null
                         )
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,

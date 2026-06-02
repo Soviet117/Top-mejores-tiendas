@@ -47,7 +47,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                                 email = usuarioEntity.email ?: "",
                                 phone = usuarioEntity.telefono ?: "",
                                 profilePhotoUrl = usuarioEntity.fotoPerfil ?: "",
-                                isOwner = usuarioEntity.esDuenio
+                                isOwner = usuarioEntity.esDuenio,
+                                ruc = usuarioEntity.ruc
                             )
                         )
                     } else {

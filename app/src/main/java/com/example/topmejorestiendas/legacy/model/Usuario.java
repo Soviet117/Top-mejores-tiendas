@@ -14,13 +14,15 @@ public class Usuario {
     public String telefono;
     public String fotoPerfil;
     public boolean esDuenio;
+    public String ruc;
 
-    public Usuario(String nombreCompleto, String email, String contrasena, String telefono, String fotoPerfil, boolean esDuenio) {
+    public Usuario(String nombreCompleto, String email, String contrasena, String telefono, String fotoPerfil, boolean esDuenio, String ruc) {
         this.nombreCompleto = nombreCompleto;
         this.email = email;
         this.contrasena = contrasena;
         this.telefono = telefono;
         this.fotoPerfil = fotoPerfil;
         this.esDuenio = esDuenio;
+        this.ruc = ruc;
     }
 }

@@ -65,7 +65,7 @@ public class RegistroUsuarioActivity extends AppCompatActivity {
                 runOnUiThread(() -> Toast.makeText(this, "Email ya registrado", Toast.LENGTH_SHORT).show());
                 return;
             }
-            Usuario user = new Usuario(nombre, email, pass, telf, savedImagePath, false);
+            Usuario user = new Usuario(nombre, email, pass, telf, savedImagePath, false, null);
             db.usuarioDao().registrar(user);
             runOnUiThread(() -> {
                 Toast.makeText(this, "Registro exitoso", Toast.LENGTH_SHORT).show();

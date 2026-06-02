@@ -49,7 +49,7 @@ class BusinessProfileViewModel(
                 val negocio = negocioDao.obtenerPorId(bId)
                 if (negocio != null) {
                     val resenas = resenaDao.obtenerPorNegocio(bId)
-                    val mappedBusiness = negocio.toDomainModel(resenas.size)
+                    val mappedBusiness = negocio.toDomainModel(resenas)
                     
                     withContext(Dispatchers.Main) {
                         _uiState.value = _uiState.value.copy(
@@ -77,7 +77,7 @@ class BusinessProfileViewModel(
         }
     }
 
-    fun submitReview(rating: Int, comment: String) {
+    fun submitReview(ratingAtencion: Int, ratingProducto: Int, ratingCosto: Int, comment: String) {
         val bId = businessId.toIntOrNull() ?: return
         val currentUserId = sessionManager.userId
         
@@ -86,11 +86,16 @@ class BusinessProfileViewModel(
             return
         }
 
+        val calificacionGlobal = (ratingAtencion + ratingProducto + ratingCosto) / 3
+
         viewModelScope.launch(Dispatchers.IO) {
             val newReview = Resena(
                 currentUserId,
                 bId,
-                rating,
+                calificacionGlobal,
+                ratingAtencion,
+                ratingProducto,
+                ratingCosto,
                 comment,
                 System.currentTimeMillis()
             )

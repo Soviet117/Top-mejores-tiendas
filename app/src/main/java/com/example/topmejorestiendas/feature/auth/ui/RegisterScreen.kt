@@ -18,6 +18,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.filled.Store
 
 @Composable
 fun RegisterScreen(
@@ -33,6 +34,7 @@ fun RegisterScreen(
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isOwner by remember { mutableStateOf(false) }
+    var ruc by remember { mutableStateOf("") }
 
     // Navigation logic based on login/register success
     LaunchedEffect(uiState.user) {
@@ -150,10 +152,23 @@ fun RegisterScreen(
             }
         }
 
+        if (isOwner) {
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedTextField(
+                value = ruc,
+                onValueChange = { ruc = it; viewModel.clearError() },
+                label = { Text("RUC del Negocio") },
+                leadingIcon = { Icon(Icons.Default.Store, contentDescription = null) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = { viewModel.register(name, email, phone, password, isOwner) },
+            onClick = { viewModel.register(name, email, phone, password, isOwner, ruc) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),

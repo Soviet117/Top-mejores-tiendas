@@ -10,5 +10,8 @@ data class Business(
     val category: String,
     val isVerified: Boolean = false,
     val isOpen: Boolean = true,
-    val distanceText: String = "Cerca de ti"
+    val distanceText: String = "Cerca de ti",
+    val ratingAtencion: Double = 0.0,
+    val ratingProducto: Double = 0.0,
+    val ratingCosto: Double = 0.0
 )

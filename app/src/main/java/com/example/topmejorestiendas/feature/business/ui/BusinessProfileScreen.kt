@@ -151,34 +151,46 @@ fun BusinessProfileScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Global Rating
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Filled.Star,
-                            contentDescription = "Rating",
-                            tint = Color(0xFFFFB300),
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        
                         Text(
                             text = String.format(Locale.US, "%.1f", business.rating),
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Bold
                         )
-                        Text(
-                            text = " (${business.reviewCount} reseñas)",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text(
-                            text = "• ${business.category}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Row {
+                                repeat(5) { index ->
+                                    Icon(
+                                        imageVector = if (index < business.rating.toInt()) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                                        contentDescription = null,
+                                        tint = Color(0xFFFFB300),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                            Text(
+                                text = "${business.reviewCount} reseñas",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
+
+                    // Detailed Ratings
+                    if (business.reviewCount > 0) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            RatingProgressBar("Atención", business.ratingAtencion)
+                            RatingProgressBar("Producto", business.ratingProducto)
+                            RatingProgressBar("Costos", business.ratingCosto)
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
 
                     Text(
                         text = business.description,
@@ -226,8 +238,8 @@ fun BusinessProfileScreen(
         if (showRatingDialog) {
             RatingDialog(
                 onDismiss = { showRatingDialog = false },
-                onSubmit = { rating, comment ->
-                    viewModel.submitReview(rating, comment)
+                onSubmit = { ratingAtencion, ratingProducto, ratingCosto, comment ->
+                    viewModel.submitReview(ratingAtencion, ratingProducto, ratingCosto, comment)
                     showRatingDialog = false
                 }
             )
@@ -313,9 +325,11 @@ fun ReviewCard(review: Resena) {
 @Composable
 fun RatingDialog(
     onDismiss: () -> Unit,
-    onSubmit: (rating: Int, comment: String) -> Unit
+    onSubmit: (ratingAtencion: Int, ratingProducto: Int, ratingCosto: Int, comment: String) -> Unit
 ) {
-    var rating by remember { mutableIntStateOf(0) }
+    var ratingAtencion by remember { mutableIntStateOf(0) }
+    var ratingProducto by remember { mutableIntStateOf(0) }
+    var ratingCosto by remember { mutableIntStateOf(0) }
     var comment by remember { mutableStateOf("") }
 
     AlertDialog(
@@ -323,21 +337,12 @@ fun RatingDialog(
         title = { Text("Calificar negocio") },
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
-                ) {
-                    repeat(5) { index ->
-                        IconButton(onClick = { rating = index + 1 }) {
-                            Icon(
-                                imageVector = if (index < rating) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                                contentDescription = "Estrella ${index + 1}",
-                                tint = Color(0xFFFFB300),
-                                modifier = Modifier.size(36.dp)
-                            )
-                        }
-                    }
-                }
+                RatingRow(label = "Atención", currentRating = ratingAtencion, onRatingChange = { ratingAtencion = it })
+                RatingRow(label = "Producto", currentRating = ratingProducto, onRatingChange = { ratingProducto = it })
+                RatingRow(label = "Costos", currentRating = ratingCosto, onRatingChange = { ratingCosto = it })
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 OutlinedTextField(
                     value = comment,
                     onValueChange = { comment = it },
@@ -349,8 +354,8 @@ fun RatingDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onSubmit(rating, comment) },
-                enabled = rating > 0
+                onClick = { onSubmit(ratingAtencion, ratingProducto, ratingCosto, comment) },
+                enabled = ratingAtencion > 0 && ratingProducto > 0 && ratingCosto > 0
             ) {
                 Text("Guardar")
             }
@@ -361,4 +366,59 @@ fun RatingDialog(
             }
         }
     )
+}
+
+@Composable
+fun RatingRow(label: String, currentRating: Int, onRatingChange: (Int) -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+    ) {
+        Text(text = label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+        Row {
+            repeat(5) { index ->
+                IconButton(
+                    onClick = { onRatingChange(index + 1) },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = if (index < currentRating) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                        contentDescription = "Estrella ${index + 1}",
+                        tint = Color(0xFFFFB300),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RatingProgressBar(label: String, rating: Double) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.weight(0.3f),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+        LinearProgressIndicator(
+            progress = { (rating / 5.0).toFloat() },
+            modifier = Modifier
+                .weight(0.6f)
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp)),
+            color = Color(0xFFFFB300),
+            trackColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+        Text(
+            text = String.format(Locale.US, "%.1f", rating),
+            modifier = Modifier.weight(0.1f).padding(start = 8.dp),
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Bold
+        )
+    }
 }
