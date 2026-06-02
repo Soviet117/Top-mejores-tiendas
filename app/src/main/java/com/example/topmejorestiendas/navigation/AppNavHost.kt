@@ -98,7 +98,9 @@ fun AppNavHost(
         }
 
         composable("home") {
+            val homeViewModel: com.example.topmejorestiendas.feature.home.ui.HomeViewModel = viewModel(factory = com.example.topmejorestiendas.feature.home.ui.HomeViewModelFactory(context))
             HomeScreen(
+                viewModel = homeViewModel,
                 onNavigateToBusiness = { businessId ->
                     navController.navigate("business_profile/$businessId")
                 },
@@ -176,9 +178,10 @@ fun AppNavHost(
         }
         
         composable("business_profile/{businessId}") { backStackEntry ->
-            val businessId = backStackEntry.arguments?.getString("businessId")
+            val businessId = backStackEntry.arguments?.getString("businessId") ?: ""
+            val businessProfileViewModel: com.example.topmejorestiendas.feature.business.ui.BusinessProfileViewModel = viewModel(factory = com.example.topmejorestiendas.feature.business.ui.BusinessProfileViewModelFactory(context, businessId))
             com.example.topmejorestiendas.feature.business.ui.BusinessProfileScreen(
-                businessId = businessId,
+                viewModel = businessProfileViewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

@@ -22,41 +22,37 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.topmejorestiendas.core.domain.model.Business
+import com.example.topmejorestiendas.model.Resena
 import java.text.SimpleDateFormat
 import java.util.*
-
-// Modelo de datos temporal para reseñas
-data class MockReview(
-    val id: String = UUID.randomUUID().toString(),
-    val userName: String,
-    val rating: Int,
-    val comment: String,
-    val date: Long = System.currentTimeMillis()
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BusinessProfileScreen(
-    businessId: String?,
+    viewModel: BusinessProfileViewModel,
     onNavigateBack: () -> Unit
 ) {
-    // Obtener datos mockeados basados en el ID
-    val business = getMockBusiness(businessId)
+    val uiState by viewModel.uiState.collectAsState()
+    var showRatingDialog by remember { mutableStateOf(false) }
+
+    if (uiState.isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val business = uiState.business
 
     if (business == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Negocio no encontrado", style = MaterialTheme.typography.titleLarge)
+            Text(uiState.error ?: "Negocio no encontrado", style = MaterialTheme.typography.titleLarge)
             Button(onClick = onNavigateBack, modifier = Modifier.padding(top = 16.dp)) {
                 Text("Regresar")
             }
         }
         return
     }
-
-    // Estado local para las reseñas
-    var reviews by remember { mutableStateOf(getMockReviews(businessId)) }
-    var showRatingDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         floatingActionButton = {
@@ -164,16 +160,13 @@ fun BusinessProfileScreen(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         
-                        // Calculate dynamic rating
-                        val currentRating = if (reviews.isEmpty()) business.rating else reviews.map { it.rating }.average()
-                        
                         Text(
-                            text = String.format(Locale.US, "%.1f", currentRating),
+                            text = String.format(Locale.US, "%.1f", business.rating),
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = " (${reviews.size} reseñas)",
+                            text = " (${business.reviewCount} reseñas)",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -214,14 +207,14 @@ fun BusinessProfileScreen(
             }
 
             // Reviews List
-            if (reviews.isEmpty()) {
+            if (uiState.reviews.isEmpty()) {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
                         Text("Aún no hay reseñas. ¡Sé el primero!", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             } else {
-                items(reviews) { review ->
+                items(uiState.reviews) { review ->
                     ReviewCard(review = review)
                 }
             }
@@ -234,12 +227,7 @@ fun BusinessProfileScreen(
             RatingDialog(
                 onDismiss = { showRatingDialog = false },
                 onSubmit = { rating, comment ->
-                    val newReview = MockReview(
-                        userName = "Usuario Nuevo",
-                        rating = rating,
-                        comment = comment
-                    )
-                    reviews = listOf(newReview) + reviews
+                    viewModel.submitReview(rating, comment)
                     showRatingDialog = false
                 }
             )
@@ -248,7 +236,7 @@ fun BusinessProfileScreen(
 }
 
 @Composable
-fun ReviewCard(review: MockReview) {
+fun ReviewCard(review: Resena) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -264,17 +252,17 @@ fun ReviewCard(review: MockReview) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = review.userName.first().toString().uppercase(),
+                        text = "U", // Podríamos cargar el nombre del usuario real si unimos la tabla
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         fontWeight = FontWeight.Bold
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = review.userName, fontWeight = FontWeight.Bold)
+                    Text(text = "Usuario ${review.idUsuario}", fontWeight = FontWeight.Bold)
                     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
                     Text(
-                        text = dateFormat.format(Date(review.date)),
+                        text = dateFormat.format(Date(review.fecha)),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -282,7 +270,7 @@ fun ReviewCard(review: MockReview) {
                 Row {
                     repeat(5) { index ->
                         Icon(
-                            imageVector = if (index < review.rating) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                            imageVector = if (index < review.calificacion) Icons.Filled.Star else Icons.Outlined.StarBorder,
                             contentDescription = null,
                             tint = Color(0xFFFFB300),
                             modifier = Modifier.size(16.dp)
@@ -291,7 +279,33 @@ fun ReviewCard(review: MockReview) {
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Text(text = review.comment, style = MaterialTheme.typography.bodyMedium)
+            Text(text = review.comentario, style = MaterialTheme.typography.bodyMedium)
+
+            if (!review.respuestaDuenio.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                        .padding(12.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "Respuesta del dueño:",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Text(
+                            text = review.respuestaDuenio!!,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -347,50 +361,4 @@ fun RatingDialog(
             }
         }
     )
-}
-
-// Datos Mock
-fun getMockBusiness(id: String?): Business? {
-    val businesses = listOf(
-        Business(
-            id = "1",
-            name = "Café de Especialidad 'El Grano'",
-            description = "El mejor café de la ciudad, tostado artesanalmente. Disfruta de un ambiente acogedor, WiFi rápido y la mejor pastelería de la región.",
-            imageUrl = "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=600&auto=format&fit=crop",
-            rating = 4.8,
-            reviewCount = 124,
-            category = "Cafetería",
-            isVerified = true,
-            isOpen = true,
-            distanceText = "A 200m de ti"
-        ),
-        Business(
-            id = "2",
-            name = "Hamburguesas 'La Vaca Lola'",
-            description = "Hamburguesas smash con ingredientes locales. Preparadas al momento con pan artesanal y nuestras salsas secretas.",
-            imageUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=600&auto=format&fit=crop",
-            rating = 4.5,
-            reviewCount = 89,
-            category = "Restaurante",
-            isVerified = false,
-            isOpen = false,
-            distanceText = "A 1.2km de ti"
-        )
-    )
-    return businesses.find { it.id == id }
-}
-
-fun getMockReviews(businessId: String?): List<MockReview> {
-    if (businessId == "1") {
-        return listOf(
-            MockReview(userName = "Ana García", rating = 5, comment = "Excelente café y muy buen ambiente para trabajar."),
-            MockReview(userName = "Carlos Ruiz", rating = 4, comment = "Muy rico todo, aunque un poco ruidoso en las tardes.")
-        )
-    }
-    if (businessId == "2") {
-        return listOf(
-            MockReview(userName = "Luis Fernando", rating = 5, comment = "Las mejores hamburguesas de la ciudad, punto.")
-        )
-    }
-    return emptyList()
 }
