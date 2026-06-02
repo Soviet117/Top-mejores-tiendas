@@ -23,6 +23,12 @@ public class SessionManager {
         editor.commit();
     }
 
+    public void createGuestSession() {
+        editor.putBoolean(KEY_IS_LOGGED_IN, true);
+        editor.putInt(KEY_USER_ID, -2);
+        editor.commit();
+    }
+
     public boolean isLoggedIn() {
         return pref.getBoolean(KEY_IS_LOGGED_IN, false);
     }

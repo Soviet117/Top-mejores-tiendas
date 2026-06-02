@@ -7,15 +7,17 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 import com.example.topmejorestiendas.model.Negocio;
+import com.example.topmejorestiendas.model.Reporte;
 import com.example.topmejorestiendas.model.Resena;
 import com.example.topmejorestiendas.model.Usuario;
 import java.util.concurrent.Executors;
 
-@Database(entities = {Usuario.class, Negocio.class, Resena.class}, version = 5)
+@Database(entities = {Usuario.class, Negocio.class, Resena.class, Reporte.class}, version = 6)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract UsuarioDao usuarioDao();
     public abstract NegocioDao negocioDao();
     public abstract ResenaDao resenaDao();
+    public abstract ReporteDao reporteDao();
 
     private static volatile AppDatabase INSTANCE;
 
@@ -46,6 +48,7 @@ public abstract class AppDatabase extends RoomDatabase {
         db.usuarioDao().eliminarTodos();
         db.negocioDao().eliminarTodos();
         db.resenaDao().eliminarTodos();
+        db.reporteDao().eliminarTodos();
         // Base de datos vacía para empezar de cero según lo solicitado
     }
 }

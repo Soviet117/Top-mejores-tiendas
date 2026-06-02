@@ -2,6 +2,7 @@ package com.example.topmejorestiendas.feature.business.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -34,6 +36,7 @@ fun BusinessProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showRatingDialog by remember { mutableStateOf(false) }
+    var showReportDialog by remember { mutableStateOf(false) }
 
     if (uiState.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -56,11 +59,13 @@ fun BusinessProfileScreen(
 
     Scaffold(
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { showRatingDialog = true },
-                icon = { Icon(Icons.Filled.Star, contentDescription = "Calificar") },
-                text = { Text("Escribir Reseña") }
-            )
+            if (!uiState.isGuest) {
+                ExtendedFloatingActionButton(
+                    onClick = { showRatingDialog = true },
+                    icon = { Icon(Icons.Filled.Star, contentDescription = "Calificar") },
+                    text = { Text("Escribir Reseña") }
+                )
+            }
         }
     ) { paddingValues ->
         LazyColumn(
@@ -146,6 +151,15 @@ fun BusinessProfileScreen(
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
                             )
+                        }
+                        if (!uiState.isGuest) {
+                            IconButton(onClick = { showReportDialog = true }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Warning,
+                                    contentDescription = "Reportar",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
                     }
 
@@ -241,6 +255,16 @@ fun BusinessProfileScreen(
                 onSubmit = { ratingAtencion, ratingProducto, ratingCosto, comment ->
                     viewModel.submitReview(ratingAtencion, ratingProducto, ratingCosto, comment)
                     showRatingDialog = false
+                }
+            )
+        }
+
+        if (showReportDialog) {
+            ReportDialog(
+                onDismiss = { showReportDialog = false },
+                onSubmit = { reason ->
+                    viewModel.submitReport(reason)
+                    showReportDialog = false
                 }
             )
         }
@@ -421,4 +445,50 @@ fun RatingProgressBar(label: String, rating: Double) {
             fontWeight = FontWeight.Bold
         )
     }
+}
+
+@Composable
+fun ReportDialog(
+    onDismiss: () -> Unit,
+    onSubmit: (String) -> Unit
+) {
+    var selectedReason by remember { mutableStateOf("") }
+    val options = listOf("El local ya no existe", "Información falsa o engañosa", "Contenido inapropiado", "Otro")
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Reportar Local", color = MaterialTheme.colorScheme.error) },
+        text = {
+            Column {
+                Text("Por favor, selecciona el motivo de tu reporte:", style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                options.forEach { option ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().clickable { selectedReason = option }
+                    ) {
+                        RadioButton(
+                            selected = (option == selectedReason),
+                            onClick = { selectedReason = option }
+                        )
+                        Text(text = option, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onSubmit(selectedReason) },
+                enabled = selectedReason.isNotEmpty(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text("Enviar Reporte")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
 }

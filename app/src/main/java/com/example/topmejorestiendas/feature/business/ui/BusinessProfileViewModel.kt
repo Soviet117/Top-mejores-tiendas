@@ -21,7 +21,8 @@ data class BusinessProfileUiState(
     val isLoading: Boolean = true,
     val business: Business? = null,
     val reviews: List<Resena> = emptyList(),
-    val error: String? = null
+    val error: String? = null,
+    val isGuest: Boolean = false
 )
 
 class BusinessProfileViewModel(
@@ -55,7 +56,8 @@ class BusinessProfileViewModel(
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             business = mappedBusiness,
-                            reviews = resenas
+                            reviews = resenas,
+                            isGuest = sessionManager.userId == -2 || sessionManager.userId == -1
                         )
                     }
                 } else {
@@ -111,6 +113,27 @@ class BusinessProfileViewModel(
 
             // Recargar datos para refrescar la UI
             loadBusinessData()
+        }
+    }
+
+    fun submitReport(motivo: String) {
+        val bId = businessId.toIntOrNull() ?: return
+        val currentUserId = sessionManager.userId
+        
+        if (currentUserId == -1 || currentUserId == -2) {
+            // Invitados no pueden reportar
+            return
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val reporteDao = db.reporteDao()
+            val newReport = com.example.topmejorestiendas.model.Reporte(
+                currentUserId,
+                bId,
+                motivo,
+                System.currentTimeMillis()
+            )
+            reporteDao.insertar(newReport)
         }
     }
 }

@@ -92,6 +92,25 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun loginAsGuest() {
+        sessionManager.createGuestSession()
+        val guestUser = User(
+            id = -2,
+            fullName = "Invitado",
+            email = "",
+            phone = "",
+            profilePhotoUrl = "",
+            isOwner = false,
+            ruc = null
+        )
+        _uiState.value = _uiState.value.copy(
+            isLoading = false,
+            user = guestUser,
+            isLoggedIn = true,
+            error = null
+        )
+    }
+
     fun register(name: String, email: String, phone: String, pass: String, isOwner: Boolean, ruc: String) {
         if (name.isBlank() || email.isBlank() || pass.isBlank()) {
             _uiState.value = _uiState.value.copy(error = "Completa los campos obligatorios")

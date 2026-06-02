@@ -138,6 +138,12 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            TextButton(onClick = { viewModel.loginAsGuest() }) {
+                Text("Ingresar como invitado")
+            }
+
             TextButton(onClick = onNavigateToRegister) {
                 Text("¿No tienes cuenta? Regístrate aquí")
             }
