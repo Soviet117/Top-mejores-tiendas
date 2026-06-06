@@ -30,6 +30,12 @@ public interface NegocioDao {
     @Update
     void actualizar(Negocio negocio);
 
+    @Query("DELETE FROM negocios WHERE idDuenio = :idDuenio")
+    void eliminarPorDuenio(int idDuenio);
+
+    @Query("DELETE FROM negocios WHERE id = :id")
+    void eliminarPorId(int id);
+
     @Query("DELETE FROM negocios")
     void eliminarTodos();
 }

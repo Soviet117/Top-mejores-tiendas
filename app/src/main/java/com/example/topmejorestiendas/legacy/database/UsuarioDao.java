@@ -23,6 +23,9 @@ public interface UsuarioDao {
     @Update
     void actualizar(Usuario usuario);
 
+    @Query("DELETE FROM usuarios WHERE id = :id")
+    void eliminarPorId(int id);
+
     @Query("DELETE FROM usuarios")
     void eliminarTodos();
 }

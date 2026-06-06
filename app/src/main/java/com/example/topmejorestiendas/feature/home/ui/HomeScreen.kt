@@ -125,7 +125,8 @@ fun HomeScreen(
                         items(uiState.businesses) { business ->
                             BusinessCard(
                                 business = business,
-                                onClick = { onNavigateToBusiness(business.id) }
+                                onClick = { onNavigateToBusiness(business.id) },
+                                onToggleFavorite = { viewModel.toggleFavorite(business.id) }
                             )
                         }
                     }

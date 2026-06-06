@@ -61,7 +61,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun updateUser(fullName: String, phone: String, photoUrl: String, onComplete: () -> Unit) {
+    fun updateUser(fullName: String, phone: String, photoUrl: String, ruc: String, onComplete: () -> Unit) {
         val currentState = _uiState.value
         if (currentState !is ProfileUiState.Success) return
         
@@ -74,6 +74,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 usuarioEntity.nombreCompleto = fullName
                 usuarioEntity.telefono = phone
                 usuarioEntity.fotoPerfil = photoUrl
+                usuarioEntity.ruc = ruc
                 db.usuarioDao().actualizar(usuarioEntity)
                 
                 withContext(Dispatchers.Main) {
@@ -81,7 +82,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                         currentUser.copy(
                             fullName = fullName,
                             phone = phone,
-                            profilePhotoUrl = photoUrl
+                            profilePhotoUrl = photoUrl,
+                            ruc = ruc
                         )
                     )
                     onComplete()
@@ -90,6 +92,52 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 withContext(Dispatchers.Main) {
                     _uiState.value = ProfileUiState.Error("No se pudo actualizar el perfil.")
                 }
+            }
+        }
+    }
+
+    fun updatePassword(currentPass: String, newPass: String, onResult: (Boolean, String) -> Unit) {
+        val currentState = _uiState.value
+        if (currentState !is ProfileUiState.Success) return
+        val currentUser = currentState.user
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val usuarioEntity = db.usuarioDao().obtenerPorId(currentUser.id)
+            if (usuarioEntity != null) {
+                if (usuarioEntity.contrasena == currentPass) {
+                    usuarioEntity.contrasena = newPass
+                    db.usuarioDao().actualizar(usuarioEntity)
+                    withContext(Dispatchers.Main) { onResult(true, "Contraseña actualizada con éxito.") }
+                } else {
+                    withContext(Dispatchers.Main) { onResult(false, "La contraseña actual es incorrecta.") }
+                }
+            } else {
+                withContext(Dispatchers.Main) { onResult(false, "Usuario no encontrado.") }
+            }
+        }
+    }
+
+    fun deleteAccount(password: String, onResult: (Boolean, String) -> Unit) {
+        val currentState = _uiState.value
+        if (currentState !is ProfileUiState.Success) return
+        val currentUser = currentState.user
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val usuarioEntity = db.usuarioDao().obtenerPorId(currentUser.id)
+            if (usuarioEntity != null) {
+                if (usuarioEntity.contrasena == password) {
+                    // Eliminación en cascada
+                    db.negocioDao().eliminarPorDuenio(currentUser.id)
+                    db.usuarioDao().eliminarPorId(currentUser.id)
+                    withContext(Dispatchers.Main) { 
+                        sessionManager.logout()
+                        onResult(true, "Cuenta eliminada permanentemente.") 
+                    }
+                } else {
+                    withContext(Dispatchers.Main) { onResult(false, "Contraseña incorrecta.") }
+                }
+            } else {
+                withContext(Dispatchers.Main) { onResult(false, "Usuario no encontrado.") }
             }
         }
     }

@@ -2,11 +2,14 @@ package com.example.topmejorestiendas.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SessionManager {
     private static final String PREF_NAME = "UserSession";
     private static final String KEY_USER_ID = "userId";
     private static final String KEY_IS_LOGGED_IN = "isLoggedIn";
+    private static final String KEY_FAVORITES = "favorites";
     private SharedPreferences pref;
     private SharedPreferences.Editor editor;
     private Context context;
@@ -39,6 +42,21 @@ public class SessionManager {
 
     public void logout() {
         editor.clear();
+        editor.commit();
+    }
+
+    public Set<String> getFavorites() {
+        return pref.getStringSet(KEY_FAVORITES, new HashSet<>());
+    }
+
+    public void toggleFavorite(String businessId) {
+        Set<String> favorites = new HashSet<>(getFavorites());
+        if (favorites.contains(businessId)) {
+            favorites.remove(businessId);
+        } else {
+            favorites.add(businessId);
+        }
+        editor.putStringSet(KEY_FAVORITES, favorites);
         editor.commit();
     }
 }

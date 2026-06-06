@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -25,6 +26,7 @@ import com.example.topmejorestiendas.core.domain.model.Business
 fun BusinessCard(
     business: Business,
     onClick: () -> Unit,
+    onToggleFavorite: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     ElevatedCard(
@@ -67,18 +69,20 @@ fun BusinessCard(
                 }
 
                 // Botón Favorito
-                IconButton(
-                    onClick = { /* TODO */ },
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                        .background(Color.Black.copy(alpha = 0.3f), shape = RoundedCornerShape(50))
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.FavoriteBorder,
-                        contentDescription = "Favorito",
-                        tint = Color.White
-                    )
+                if (onToggleFavorite != null) {
+                    IconButton(
+                        onClick = onToggleFavorite,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .background(Color.Black.copy(alpha = 0.3f), shape = RoundedCornerShape(50))
+                    ) {
+                        Icon(
+                            imageVector = if (business.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                            contentDescription = "Favorito",
+                            tint = if (business.isFavorite) Color.Red else Color.White
+                        )
+                    }
                 }
             }
 

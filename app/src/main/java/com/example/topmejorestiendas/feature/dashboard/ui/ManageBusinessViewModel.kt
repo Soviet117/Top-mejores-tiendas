@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.topmejorestiendas.database.AppDatabase
 import com.example.topmejorestiendas.model.Negocio
+import com.example.topmejorestiendas.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +23,7 @@ sealed class ManageBusinessUiState {
 
 class ManageBusinessViewModel(application: Application) : AndroidViewModel(application) {
     private val db = AppDatabase.getInstance(application)
+    private val sessionManager = SessionManager(application)
     
     private val _uiState = MutableStateFlow<ManageBusinessUiState>(ManageBusinessUiState.Loading)
     val uiState: StateFlow<ManageBusinessUiState> = _uiState.asStateFlow()
@@ -42,6 +44,28 @@ class ManageBusinessViewModel(application: Application) : AndroidViewModel(appli
                 withContext(Dispatchers.Main) {
                     _uiState.value = ManageBusinessUiState.Error("Error: ${e.message}")
                 }
+            }
+        }
+    }
+
+    fun deleteBusiness(businessId: Int, password: String, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val userId = sessionManager.userId
+            if (userId == -1) {
+                withContext(Dispatchers.Main) { onResult(false, "Sesión inválida") }
+                return@launch
+            }
+
+            val usuarioEntity = db.usuarioDao().obtenerPorId(userId)
+            if (usuarioEntity != null) {
+                if (usuarioEntity.contrasena == password) {
+                    db.negocioDao().eliminarPorId(businessId)
+                    withContext(Dispatchers.Main) { onResult(true, "Local eliminado.") }
+                } else {
+                    withContext(Dispatchers.Main) { onResult(false, "Contraseña incorrecta.") }
+                }
+            } else {
+                withContext(Dispatchers.Main) { onResult(false, "Error de autenticación.") }
             }
         }
     }

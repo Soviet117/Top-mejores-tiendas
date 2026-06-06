@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.topmejorestiendas.core.domain.mapper.toDomainModel
 import com.example.topmejorestiendas.core.domain.model.Business
 import com.example.topmejorestiendas.database.AppDatabase
+import com.example.topmejorestiendas.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +29,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val db = AppDatabase.getInstance(application)
     private val negocioDao = db.negocioDao()
     private val resenaDao = db.resenaDao()
+    private val sessionManager = SessionManager(application)
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -45,8 +47,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onSearchQueryChanged(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
-        // Podríamos filtrar localmente aquí para que sea más rápido
         filterLocalList()
+    }
+
+    fun toggleFavorite(businessId: String) {
+        sessionManager.toggleFavorite(businessId)
+        fetchBusinesses() // Recargar para aplicar orden y estado
     }
 
     // Guardamos la lista original (sin filtro de búsqueda por nombre)
@@ -62,11 +68,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     negocioDao.obtenerPorRubro(category)
                 }
 
-                // Mapear al modelo de UI
+                val favorites = sessionManager.favorites
+
+                // Mapear al modelo de UI e inyectar favoritos
                 val mappedBusinesses = dbNegocios.map { negocio ->
                     val reviews = resenaDao.obtenerPorNegocio(negocio.id)
-                    negocio.toDomainModel(reviews)
-                }
+                    val business = negocio.toDomainModel(reviews)
+                    business.copy(isFavorite = favorites.contains(business.id))
+                }.sortedByDescending { it.isFavorite }
 
                 originalList = mappedBusinesses
 
