@@ -13,5 +13,7 @@ data class Business(
     val distanceText: String = "Cerca de ti",
     val ratingAtencion: Double = 0.0,
     val ratingProducto: Double = 0.0,
-    val ratingCosto: Double = 0.0
+    val ratingCosto: Double = 0.0,
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0
 )

@@ -79,5 +79,14 @@ dependencies {
     // Coil Compose
     implementation(libs.coil.compose)
 
+    // osmdroid for Maps
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+    
+    // Play Services Location
+    implementation("com.google.android.gms:play-services-location:21.2.0")
+
+    // Image Cropper
+    implementation("com.vanniktech:android-image-cropper:4.6.0")
+
     // Hilt
 }

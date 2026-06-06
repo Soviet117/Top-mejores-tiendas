@@ -1,8 +1,14 @@
 package com.example.topmejorestiendas.feature.dashboard.ui
 
 import android.net.Uri
+import android.Manifest
+import android.annotation.SuppressLint
+import android.location.Location
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,19 +21,23 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Store
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.topmejorestiendas.feature.common.ui.OsmMap
+import com.google.android.gms.location.LocationServices
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,6 +50,8 @@ fun AddBusinessScreen(
     var name by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
+    var latitude by remember { mutableStateOf(0.0) }
+    var longitude by remember { mutableStateOf(0.0) }
     
     val scheduleState = remember {
         listOf(
@@ -57,10 +69,41 @@ fun AddBusinessScreen(
     var description by remember { mutableStateOf("") }
     var photoUri by remember { mutableStateOf<Uri?>(null) }
 
+    val cropImageLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
+        if (result.isSuccessful) {
+            photoUri = result.uriContent
+        }
+    }
+
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let { photoUri = it }
+        uri?.let { 
+            cropImageLauncher.launch(
+                CropImageContractOptions(it, CropImageOptions(
+                    aspectRatioX = 16,
+                    aspectRatioY = 9,
+                    fixAspectRatio = true
+                ))
+            )
+        }
+    }
+
+    val context = LocalContext.current
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+    
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            @SuppressLint("MissingPermission")
+            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+                if (location != null) {
+                    latitude = location.latitude
+                    longitude = location.longitude
+                }
+            }
+        }
     }
 
     LaunchedEffect(uiState.isSuccess) {
@@ -148,10 +191,50 @@ fun AddBusinessScreen(
                 value = address,
                 onValueChange = { address = it; viewModel.clearError() },
                 label = { Text("Dirección") },
-                leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Default.Map, contentDescription = null) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Ubicación en el Mapa",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = { locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }) {
+                    Icon(
+                        imageVector = Icons.Default.MyLocation,
+                        contentDescription = "Obtener mi ubicación",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                OsmMap(
+                    modifier = Modifier.fillMaxSize(),
+                    latitude = latitude,
+                    longitude = longitude,
+                    isEditMode = true,
+                    onLocationChanged = { lat, lon ->
+                        latitude = lat
+                        longitude = lon
+                    }
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
             Text(
@@ -206,7 +289,7 @@ fun AddBusinessScreen(
                         }
                     }
                     viewModel.registerBusiness(
-                        name, category, address, finalSchedule, description, photoUri?.toString() ?: ""
+                        name, category, address, finalSchedule, description, photoUri?.toString() ?: "", latitude, longitude
                     )
                 },
                 modifier = Modifier

@@ -24,6 +24,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.topmejorestiendas.feature.common.ui.OsmMap
 import com.example.topmejorestiendas.model.Resena
 import java.text.SimpleDateFormat
 import java.util.*
@@ -218,6 +219,25 @@ fun BusinessProfileScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    if (business.latitude != 0.0 || business.longitude != 0.0) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                        ) {
+                            OsmMap(
+                                modifier = Modifier.fillMaxSize(),
+                                latitude = business.latitude,
+                                longitude = business.longitude,
+                                isEditMode = false
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(24.dp))
                     HorizontalDivider()

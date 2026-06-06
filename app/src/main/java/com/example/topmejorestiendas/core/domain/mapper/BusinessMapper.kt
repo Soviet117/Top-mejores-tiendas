@@ -38,6 +38,8 @@ fun Negocio.toDomainModel(reviews: List<Resena> = emptyList()): Business {
         distanceText = "A ${String.format("%.1f", Math.random() * 5 + 0.1)} km de ti", // Mockeando la distancia por ahora
         ratingAtencion = avgAtencion,
         ratingProducto = avgProducto,
-        ratingCosto = avgCosto
+        ratingCosto = avgCosto,
+        latitude = this.latitud,
+        longitude = this.longitud
     )
 }
