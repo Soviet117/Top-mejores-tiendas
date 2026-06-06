@@ -31,8 +31,8 @@ fun OsmMap(
 
     val geoPoint = remember(latitude, longitude) {
         if (latitude == 0.0 && longitude == 0.0) {
-            // Default coordinates (e.g. city center)
-            GeoPoint(-16.5000, -68.1500) // La Paz, Bolivia as fallback
+            // Default coordinates for Nueva Cajamarca, Rioja, Peru
+            GeoPoint(-5.9327, -77.3082)
         } else {
             GeoPoint(latitude, longitude)
         }

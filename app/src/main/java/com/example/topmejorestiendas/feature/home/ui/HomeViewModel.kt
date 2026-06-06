@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
 data class HomeUiState(
     val isLoading: Boolean = true,
     val businesses: List<Business> = emptyList(),
-    val categories: List<String> = listOf("Todo", "Cafetería", "Restaurante", "Ofertas", "Ropa"),
+    val categories: List<String> = listOf("Todo", "Restaurantes", "Canchas Sintéticas", "Piscinas", "Cafeterías", "Gimnasios", "Tiendas de Ropa", "Farmacias", "Supermercados", "Otros"),
     val selectedCategory: String = "Todo",
     val searchQuery: String = "",
     val error: String? = null

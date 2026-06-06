@@ -14,6 +14,11 @@ import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.SportsSoccer
+import androidx.compose.material.icons.filled.Pool
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.LocalPharmacy
+import androidx.compose.material.icons.filled.LocalGroceryStore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -79,10 +84,14 @@ fun HomeScreen(
             ) {
                 items(uiState.categories) { category ->
                     val icon = when (category) {
-                        "Cafetería" -> Icons.Default.Coffee
-                        "Restaurante" -> Icons.Default.Fastfood
-                        "Ofertas" -> Icons.Default.LocalOffer
-                        "Ropa" -> Icons.Default.ShoppingBag
+                        "Restaurantes" -> Icons.Default.Fastfood
+                        "Canchas Sintéticas" -> Icons.Default.SportsSoccer
+                        "Piscinas" -> Icons.Default.Pool
+                        "Cafeterías" -> Icons.Default.Coffee
+                        "Gimnasios" -> Icons.Default.FitnessCenter
+                        "Tiendas de Ropa" -> Icons.Default.ShoppingBag
+                        "Farmacias" -> Icons.Default.LocalPharmacy
+                        "Supermercados" -> Icons.Default.LocalGroceryStore
                         else -> Icons.Default.Category
                     }
                     CategoryChip(

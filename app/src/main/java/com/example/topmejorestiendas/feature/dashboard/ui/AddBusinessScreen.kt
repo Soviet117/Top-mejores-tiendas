@@ -24,7 +24,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Store
-import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,7 +37,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.topmejorestiendas.feature.common.ui.OsmMap
-import com.google.android.gms.location.LocationServices
+import com.example.topmejorestiendas.feature.common.ui.OsmMap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,21 +90,6 @@ fun AddBusinessScreen(
     }
 
     val context = LocalContext.current
-    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-    
-    val locationPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (isGranted) {
-            @SuppressLint("MissingPermission")
-            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-                if (location != null) {
-                    latitude = location.latitude
-                    longitude = location.longitude
-                }
-            }
-        }
-    }
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
@@ -176,14 +161,39 @@ fun AddBusinessScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = category,
-                onValueChange = { category = it; viewModel.clearError() },
-                label = { Text("Categoría (Ej: Cafetería, Restaurante)") },
-                leadingIcon = { Icon(Icons.Default.Category, contentDescription = null) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
+            val predefinedCategories = listOf("Restaurantes", "Canchas Sintéticas", "Piscinas", "Cafeterías", "Gimnasios", "Tiendas de Ropa", "Farmacias", "Supermercados", "Otros")
+            var expandedCategory by remember { mutableStateOf(false) }
+
+            ExposedDropdownMenuBox(
+                expanded = expandedCategory,
+                onExpandedChange = { expandedCategory = !expandedCategory }
+            ) {
+                OutlinedTextField(
+                    value = category,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Categoría") },
+                    leadingIcon = { Icon(Icons.Default.Category, contentDescription = null) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategory) },
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                    modifier = Modifier.fillMaxWidth().menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = expandedCategory,
+                    onDismissRequest = { expandedCategory = false }
+                ) {
+                    predefinedCategories.forEach { selectionOption ->
+                        DropdownMenuItem(
+                            text = { Text(selectionOption) },
+                            onClick = {
+                                category = selectionOption
+                                viewModel.clearError()
+                                expandedCategory = false
+                            }
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -207,12 +217,17 @@ fun AddBusinessScreen(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
-                IconButton(onClick = { locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }) {
-                    Icon(
-                        imageVector = Icons.Default.MyLocation,
-                        contentDescription = "Obtener mi ubicación",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                if (latitude != 0.0 || longitude != 0.0) {
+                    IconButton(onClick = { 
+                        latitude = 0.0
+                        longitude = 0.0
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Borrar ubicación",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
