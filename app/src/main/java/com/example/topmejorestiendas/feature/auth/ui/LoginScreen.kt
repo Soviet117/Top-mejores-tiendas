@@ -1,7 +1,10 @@
 package com.example.topmejorestiendas.feature.auth.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.res.painterResource
+import com.example.topmejorestiendas.R
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
@@ -49,6 +52,12 @@ fun LoginScreen(
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Image(
+                painter = painterResource(id = R.drawable.ubitop_logo),
+                contentDescription = "UbiTop Logo",
+                modifier = Modifier.size(120.dp).padding(bottom = 16.dp)
+            )
+
             Text(
                 text = "Bienvenido",
                 style = MaterialTheme.typography.headlineLarge,

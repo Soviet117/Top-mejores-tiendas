@@ -24,7 +24,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.clickable
 import com.example.topmejorestiendas.core.designsystem.components.BusinessCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -77,57 +82,111 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Categorías
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(uiState.categories) { category ->
-                    val icon = when (category) {
-                        "Restaurantes" -> Icons.Default.Fastfood
-                        "Canchas Sintéticas" -> Icons.Default.SportsSoccer
-                        "Piscinas" -> Icons.Default.Pool
-                        "Cafeterías" -> Icons.Default.Coffee
-                        "Gimnasios" -> Icons.Default.FitnessCenter
-                        "Tiendas de Ropa" -> Icons.Default.ShoppingBag
-                        "Farmacias" -> Icons.Default.LocalPharmacy
-                        "Supermercados" -> Icons.Default.LocalGroceryStore
-                        else -> Icons.Default.Category
-                    }
-                    CategoryChip(
-                        label = category,
-                        icon = icon,
-                        isSelected = uiState.selectedCategory == category,
-                        onClick = { viewModel.onCategorySelected(category) }
-                    )
-                }
-            }
-
-            // Feed de Tiendas
             Crossfade(targetState = uiState.isLoading, label = "loading_crossfade") { isLoading ->
                 if (isLoading) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
-                } else if (uiState.businesses.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "No se encontraron negocios",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                } else {
+                } else if (uiState.selectedCategory == "Todo" && uiState.searchQuery.isBlank()) {
+                    // Vista Principal: Top 3 + Categorías
                     LazyColumn(
                         contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(24.dp),
+                        modifier = Modifier.fillMaxSize()
                     ) {
-                        items(uiState.businesses) { business ->
-                            BusinessCard(
-                                business = business,
-                                onClick = { onNavigateToBusiness(business.id) },
-                                onToggleFavorite = { viewModel.toggleFavorite(business.id) }
+                        // Top 3 Section
+                        item {
+                            Text(
+                                text = "Top 3 de la semana",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(bottom = 12.dp)
                             )
+                            val top3 = uiState.businesses.take(3)
+                            if (top3.isNotEmpty()) {
+                                LazyRow(
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    contentPadding = PaddingValues(end = 16.dp)
+                                ) {
+                                    items(top3) { business ->
+                                        Box(modifier = Modifier.width(280.dp)) {
+                                            BusinessCard(
+                                                business = business,
+                                                onClick = { onNavigateToBusiness(business.id) },
+                                                onToggleFavorite = { viewModel.toggleFavorite(business.id) }
+                                            )
+                                        }
+                                    }
+                                }
+                            } else {
+                                Text("No hay negocios top por ahora", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+
+                        // Explorar por Categorías
+                        item {
+                            Text(
+                                text = "Explorar por categorías",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(bottom = 12.dp)
+                            )
+                            
+                            val displayCategories = uiState.categories.filter { it != "Todo" }
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.heightIn(max = 600.dp) // Para permitir el scroll en la columna padre sin conflictos graves
+                            ) {
+                                items(displayCategories) { category ->
+                                    CategoryGridCard(
+                                        categoryName = category,
+                                        onClick = { viewModel.onCategorySelected(category) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Vista de Resultados (Lista con botón para volver)
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            if (uiState.selectedCategory != "Todo") {
+                                FilterChip(
+                                    selected = true,
+                                    onClick = { viewModel.onCategorySelected("Todo") },
+                                    label = { Text("${uiState.selectedCategory} ✕") }
+                                )
+                            }
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text("${uiState.businesses.size} resultados", style = MaterialTheme.typography.bodySmall)
+                        }
+
+                        if (uiState.businesses.isEmpty()) {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = "No se encontraron negocios",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else {
+                            LazyColumn(
+                                contentPadding = PaddingValues(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                items(uiState.businesses) { business ->
+                                    BusinessCard(
+                                        business = business,
+                                        onClick = { onNavigateToBusiness(business.id) },
+                                        onToggleFavorite = { viewModel.toggleFavorite(business.id) }
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -138,22 +197,43 @@ fun HomeScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CategoryChip(
-    label: String, 
-    icon: ImageVector, 
-    isSelected: Boolean, 
-    onClick: () -> Unit
-) {
-    FilterChip(
-        selected = isSelected,
+fun CategoryGridCard(categoryName: String, onClick: () -> Unit) {
+    val icon = when (categoryName) {
+        "Restaurantes" -> Icons.Default.Fastfood
+        "Canchas Sintéticas" -> Icons.Default.SportsSoccer
+        "Piscinas" -> Icons.Default.Pool
+        "Cafeterías" -> Icons.Default.Coffee
+        "Gimnasios" -> Icons.Default.FitnessCenter
+        "Tiendas de Ropa" -> Icons.Default.ShoppingBag
+        "Farmacias" -> Icons.Default.LocalPharmacy
+        "Supermercados" -> Icons.Default.LocalGroceryStore
+        else -> Icons.Default.Category
+    }
+
+    Card(
         onClick = onClick,
-        label = { Text(label) },
-        leadingIcon = {
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = Modifier.fillMaxWidth().aspectRatio(1.5f)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
             Icon(
                 imageVector = icon,
-                contentDescription = label,
-                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = categoryName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-    )
+    }
 }
