@@ -8,11 +8,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.topmejorestiendas.model.Resena
@@ -129,6 +131,21 @@ fun ReviewCard(
                 style = MaterialTheme.typography.bodyMedium
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f))
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    CategoryRatingRow(label = "Atención", rating = review.calidadAtencion)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    CategoryRatingRow(label = "Producto", rating = review.calidadProductos)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    CategoryRatingRow(label = "Costos", rating = review.costos)
+                }
+            }
+
             if (!review.respuestaDuenio.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Box(
@@ -177,5 +194,35 @@ fun ReviewCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun CategoryRatingRow(label: String, rating: Int) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.width(80.dp)
+        )
+        Row {
+            repeat(5) { index ->
+                Icon(
+                    imageVector = if (index < rating) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                    contentDescription = null,
+                    tint = Color(0xFFFFB300),
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "$rating/5",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
@@ -24,6 +25,7 @@ import coil.compose.AsyncImage
 fun ProfileScreen(
     viewModel: ProfileViewModel,
     onNavigateToEditProfile: () -> Unit,
+    onNavigateToReviewHistory: () -> Unit,
     onLogout: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -129,6 +131,17 @@ fun ProfileScreen(
                                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                                 ProfileInfoRow(icon = Icons.Default.Phone, label = "Teléfono", value = user.phone.ifEmpty { "No especificado" })
                             }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        OutlinedButton(
+                            onClick = onNavigateToReviewHistory,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Historial de Reseñas")
                         }
                     }
                 }

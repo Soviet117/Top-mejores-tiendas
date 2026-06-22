@@ -38,6 +38,7 @@ fun BusinessProfileScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showRatingDialog by remember { mutableStateOf(false) }
     var showReportDialog by remember { mutableStateOf(false) }
+    val isEditing = uiState.userReview != null
 
     if (uiState.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -63,8 +64,8 @@ fun BusinessProfileScreen(
             if (!uiState.isGuest) {
                 ExtendedFloatingActionButton(
                     onClick = { showRatingDialog = true },
-                    icon = { Icon(Icons.Filled.Star, contentDescription = "Calificar") },
-                    text = { Text("Escribir Reseña") }
+                    icon = { Icon(Icons.Filled.Star, contentDescription = if (isEditing) "Editar Reseña" else "Calificar") },
+                    text = { Text(if (isEditing) "Editar Reseña" else "Escribir Reseña") }
                 )
             }
         }
@@ -211,6 +212,11 @@ fun BusinessProfileScreen(
                         text = business.description,
                         style = MaterialTheme.typography.bodyLarge
                     )
+
+                    if (business.prices.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        PricesTable(pricesString = business.prices)
+                    }
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
@@ -270,8 +276,13 @@ fun BusinessProfileScreen(
         }
 
         if (showRatingDialog) {
+            val existing = uiState.userReview
             RatingDialog(
                 onDismiss = { showRatingDialog = false },
+                initialAtencion = existing?.calidadAtencion ?: 0,
+                initialProducto = existing?.calidadProductos ?: 0,
+                initialCosto = existing?.costos ?: 0,
+                initialComment = existing?.comentario ?: "",
                 onSubmit = { ratingAtencion, ratingProducto, ratingCosto, comment ->
                     viewModel.submitReview(ratingAtencion, ratingProducto, ratingCosto, comment)
                     showRatingDialog = false
@@ -369,16 +380,20 @@ fun ReviewCard(review: Resena) {
 @Composable
 fun RatingDialog(
     onDismiss: () -> Unit,
+    initialAtencion: Int = 0,
+    initialProducto: Int = 0,
+    initialCosto: Int = 0,
+    initialComment: String = "",
     onSubmit: (ratingAtencion: Int, ratingProducto: Int, ratingCosto: Int, comment: String) -> Unit
 ) {
-    var ratingAtencion by remember { mutableIntStateOf(0) }
-    var ratingProducto by remember { mutableIntStateOf(0) }
-    var ratingCosto by remember { mutableIntStateOf(0) }
-    var comment by remember { mutableStateOf("") }
+    var ratingAtencion by remember { mutableIntStateOf(initialAtencion) }
+    var ratingProducto by remember { mutableIntStateOf(initialProducto) }
+    var ratingCosto by remember { mutableIntStateOf(initialCosto) }
+    var comment by remember { mutableStateOf(initialComment) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Calificar negocio") },
+        title = { Text(if (initialAtencion > 0 || initialProducto > 0 || initialCosto > 0) "Editar Reseña" else "Calificar negocio") },
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 RatingRow(label = "Atención", currentRating = ratingAtencion, onRatingChange = { ratingAtencion = it })
@@ -464,6 +479,64 @@ fun RatingProgressBar(label: String, rating: Double) {
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold
         )
+    }
+}
+
+@Composable
+fun PricesTable(pricesString: String) {
+    val priceEntries = pricesString.split(",").mapNotNull { entry ->
+        val parts = entry.trim().split(":")
+        if (parts.size == 2) parts[0].trim() to parts[1].trim() else null
+    }
+    if (priceEntries.isEmpty()) return
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Precios",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    Text(
+                        text = "Concepto",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = "Precio",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                HorizontalDivider(modifier = Modifier.padding(bottom = 4.dp))
+                priceEntries.forEach { (concept, price) ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = concept,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = "S/ $price",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

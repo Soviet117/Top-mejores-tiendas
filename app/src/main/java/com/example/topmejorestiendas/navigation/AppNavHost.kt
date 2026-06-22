@@ -37,6 +37,9 @@ import com.example.topmejorestiendas.feature.profile.ui.EditProfileScreen
 import com.example.topmejorestiendas.feature.profile.ui.ProfileScreen
 import com.example.topmejorestiendas.feature.profile.ui.ProfileViewModel
 import com.example.topmejorestiendas.feature.profile.ui.ProfileViewModelFactory
+import com.example.topmejorestiendas.feature.profile.ui.ReviewHistoryScreen
+import com.example.topmejorestiendas.feature.profile.ui.ReviewHistoryViewModel
+import com.example.topmejorestiendas.feature.profile.ui.ReviewHistoryViewModelFactory
 
 @Composable
 fun AppNavHost(
@@ -161,12 +164,21 @@ fun AppNavHost(
             ProfileScreen(
                 viewModel = profileViewModel,
                 onNavigateToEditProfile = { navController.navigate("edit_profile") },
+                onNavigateToReviewHistory = { navController.navigate("review_history") },
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate("login") {
-                        popUpTo(0) // Limpiar todo el stack
+                        popUpTo(0)
                     }
                 }
+            )
+        }
+
+        composable("review_history") {
+            val reviewHistoryViewModel: ReviewHistoryViewModel = viewModel(factory = ReviewHistoryViewModelFactory(context))
+            ReviewHistoryScreen(
+                viewModel = reviewHistoryViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

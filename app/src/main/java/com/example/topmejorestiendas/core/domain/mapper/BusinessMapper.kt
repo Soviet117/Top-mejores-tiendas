@@ -40,6 +40,7 @@ fun Negocio.toDomainModel(reviews: List<Resena> = emptyList()): Business {
         ratingProducto = avgProducto,
         ratingCosto = avgCosto,
         latitude = this.latitud,
-        longitude = this.longitud
+        longitude = this.longitud,
+        prices = this.precios ?: ""
     )
 }

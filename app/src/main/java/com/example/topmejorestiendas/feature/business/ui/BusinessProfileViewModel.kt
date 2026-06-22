@@ -22,7 +22,8 @@ data class BusinessProfileUiState(
     val business: Business? = null,
     val reviews: List<Resena> = emptyList(),
     val error: String? = null,
-    val isGuest: Boolean = false
+    val isGuest: Boolean = false,
+    val userReview: Resena? = null
 )
 
 class BusinessProfileViewModel(
@@ -51,13 +52,18 @@ class BusinessProfileViewModel(
                 if (negocio != null) {
                     val resenas = resenaDao.obtenerPorNegocio(bId)
                     val mappedBusiness = negocio.toDomainModel(resenas)
+                    val currentUserId = sessionManager.userId
+                    val userReview = if (currentUserId > 0) {
+                        resenaDao.obtenerPorUsuarioYNegocio(currentUserId, bId)
+                    } else null
                     
                     withContext(Dispatchers.Main) {
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             business = mappedBusiness,
                             reviews = resenas,
-                            isGuest = sessionManager.userId == -2 || sessionManager.userId == -1
+                            isGuest = sessionManager.userId == -2 || sessionManager.userId == -1,
+                            userReview = userReview
                         )
                     }
                 } else {
@@ -84,26 +90,36 @@ class BusinessProfileViewModel(
         val currentUserId = sessionManager.userId
         
         if (currentUserId == -1) {
-            // Manejar error de sesión no iniciada si es necesario
             return
         }
 
         val calificacionGlobal = (ratingAtencion + ratingProducto + ratingCosto) / 3
 
         viewModelScope.launch(Dispatchers.IO) {
-            val newReview = Resena(
-                currentUserId,
-                bId,
-                calificacionGlobal,
-                ratingAtencion,
-                ratingProducto,
-                ratingCosto,
-                comment,
-                System.currentTimeMillis()
-            )
-            resenaDao.insertar(newReview)
+            val existingReview = resenaDao.obtenerPorUsuarioYNegocio(currentUserId, bId)
             
-            // Actualizar el promedio en el negocio
+            if (existingReview != null) {
+                existingReview.calificacion = calificacionGlobal
+                existingReview.calidadAtencion = ratingAtencion
+                existingReview.calidadProductos = ratingProducto
+                existingReview.costos = ratingCosto
+                existingReview.comentario = comment
+                existingReview.fecha = System.currentTimeMillis()
+                resenaDao.actualizar(existingReview)
+            } else {
+                val newReview = Resena(
+                    currentUserId,
+                    bId,
+                    calificacionGlobal,
+                    ratingAtencion,
+                    ratingProducto,
+                    ratingCosto,
+                    comment,
+                    System.currentTimeMillis()
+                )
+                resenaDao.insertar(newReview)
+            }
+            
             val newAverage = resenaDao.obtenerPromedio(bId)
             val negocio = negocioDao.obtenerPorId(bId)
             if (negocio != null) {
@@ -111,7 +127,6 @@ class BusinessProfileViewModel(
                 negocioDao.actualizar(negocio)
             }
 
-            // Recargar datos para refrescar la UI
             loadBusinessData()
         }
     }

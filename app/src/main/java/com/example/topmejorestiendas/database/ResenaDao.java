@@ -18,6 +18,12 @@ public interface ResenaDao {
     @Query("SELECT AVG(calificacion) FROM resenas WHERE idNegocio = :idNegocio")
     float obtenerPromedio(int idNegocio);
 
+    @Query("SELECT * FROM resenas WHERE idUsuario = :idUsuario AND idNegocio = :idNegocio LIMIT 1")
+    Resena obtenerPorUsuarioYNegocio(int idUsuario, int idNegocio);
+
+    @Query("SELECT * FROM resenas WHERE idUsuario = :idUsuario ORDER BY fecha DESC")
+    List<Resena> obtenerPorUsuario(int idUsuario);
+
     @Update
     void actualizar(Resena resena);
 

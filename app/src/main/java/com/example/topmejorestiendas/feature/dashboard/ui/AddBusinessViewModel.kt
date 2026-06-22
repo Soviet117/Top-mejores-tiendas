@@ -36,7 +36,8 @@ class AddBusinessViewModel(application: Application) : AndroidViewModel(applicat
         description: String,
         photoUri: String,
         latitude: Double = 0.0,
-        longitude: Double = 0.0
+        longitude: Double = 0.0,
+        prices: String = ""
     ) {
         if (name.isBlank() || category.isBlank() || address.isBlank()) {
             _uiState.value = _uiState.value.copy(error = "Nombre, Categoría y Dirección son obligatorios.")
@@ -64,6 +65,7 @@ class AddBusinessViewModel(application: Application) : AndroidViewModel(applicat
                 )
                 newBusiness.latitud = latitude
                 newBusiness.longitud = longitude
+                newBusiness.precios = prices.ifBlank { null }
                 
                 val result = db.negocioDao().insertar(newBusiness)
                 

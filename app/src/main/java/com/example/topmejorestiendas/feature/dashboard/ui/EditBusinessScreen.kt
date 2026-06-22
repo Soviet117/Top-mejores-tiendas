@@ -1,7 +1,9 @@
 package com.example.topmejorestiendas.feature.dashboard.ui
 
 import android.net.Uri
+import android.location.Geocoder
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.ui.platform.LocalContext
 import androidx.activity.result.contract.ActivityResultContracts
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
@@ -33,6 +35,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.topmejorestiendas.feature.common.ui.OsmMap
+import androidx.compose.material.icons.filled.Add
 
 private fun parseScheduleString(scheduleStr: String?): List<ScheduleDayState> {
     val defaultDays = listOf("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")
@@ -136,6 +139,34 @@ fun EditBusinessScreen(
                     
                     var description by remember { mutableStateOf(negocio.descripcion ?: "") }
                     var photoUri by remember { mutableStateOf<Uri?>(if (!negocio.fotoNegocio.isNullOrEmpty()) Uri.parse(negocio.fotoNegocio) else null) }
+
+                    val context = LocalContext.current
+
+                    val showPricing = category == "Piscinas" || category == "Canchas Sintéticas"
+                    val priceEntries = remember { mutableStateListOf<PriceEntry>() }
+                    LaunchedEffect(negocio.id, category) {
+                        priceEntries.clear()
+                        if (showPricing && !negocio.precios.isNullOrBlank()) {
+                            negocio.precios!!.split(",").forEach { entry ->
+                                val parts = entry.trim().split(":")
+                                if (parts.size == 2) {
+                                    priceEntries.add(PriceEntry(parts[0].trim(), parts[1].trim()))
+                                }
+                            }
+                        }
+                        if (showPricing && priceEntries.isEmpty()) {
+                            when (category) {
+                                "Piscinas" -> {
+                                    priceEntries.add(PriceEntry("Adulto", ""))
+                                    priceEntries.add(PriceEntry("Niños", ""))
+                                }
+                                "Canchas Sintéticas" -> {
+                                    priceEntries.add(PriceEntry("Hora", ""))
+                                    priceEntries.add(PriceEntry("Media hora", ""))
+                                }
+                            }
+                        }
+                    }
 
                     val cropImageLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
                         if (result.isSuccessful) {
@@ -293,6 +324,22 @@ fun EditBusinessScreen(
                                 onLocationChanged = { lat, lon ->
                                     latitude = lat
                                     longitude = lon
+                                    try {
+                                        val geocoder = Geocoder(context, java.util.Locale.getDefault())
+                                        @Suppress("DEPRECATION")
+                                        val addresses = geocoder.getFromLocation(lat, lon, 1)
+                                        if (!addresses.isNullOrEmpty()) {
+                                            val addr = addresses[0]
+                                            val parts = mutableListOf<String>()
+                                            if (!addr.thoroughfare.isNullOrBlank()) parts.add(addr.thoroughfare)
+                                            if (!addr.subThoroughfare.isNullOrBlank()) parts.add(addr.subThoroughfare)
+                                            if (!addr.locality.isNullOrBlank()) parts.add(addr.locality)
+                                            if (!addr.subAdminArea.isNullOrBlank()) parts.add(addr.subAdminArea)
+                                            if (parts.isNotEmpty()) {
+                                                address = parts.joinToString(", ")
+                                            }
+                                        }
+                                    } catch (_: Exception) { }
                                 }
                             )
                         }
@@ -327,6 +374,63 @@ fun EditBusinessScreen(
                             minLines = 3
                         )
 
+                        if (showPricing) {
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = "Precios",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.align(Alignment.Start)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    priceEntries.forEachIndexed { index, entry ->
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                                        ) {
+                                            OutlinedTextField(
+                                                value = entry.concept,
+                                                onValueChange = { priceEntries[index] = entry.copy(concept = it) },
+                                                label = { Text("Concepto") },
+                                                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                                                singleLine = true
+                                            )
+                                            OutlinedTextField(
+                                                value = entry.price,
+                                                onValueChange = { priceEntries[index] = entry.copy(price = it) },
+                                                label = { Text("Precio (S/)") },
+                                                modifier = Modifier.weight(1f).padding(start = 8.dp),
+                                                singleLine = true
+                                            )
+                                            if (priceEntries.size > 1) {
+                                                IconButton(onClick = { priceEntries.removeAt(index) }) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Delete,
+                                                        contentDescription = "Eliminar",
+                                                        tint = MaterialTheme.colorScheme.error
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    OutlinedButton(
+                                        onClick = { priceEntries.add(PriceEntry("", "")) },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Agregar otra tarifa")
+                                    }
+                                }
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(32.dp))
 
                         Button(
@@ -339,7 +443,10 @@ fun EditBusinessScreen(
                                             "${state.name.take(3)}: Cerrado"
                                         }
                                     }
-                                    viewModel.updateBusiness(id, name, category, address, finalSchedule, description, photoUri?.toString() ?: "", latitude, longitude)
+                                    val finalPrices = priceEntries
+                                        .filter { it.concept.isNotBlank() && it.price.isNotBlank() }
+                                        .joinToString(", ") { "${it.concept}: ${it.price}" }
+                                    viewModel.updateBusiness(id, name, category, address, finalSchedule, description, photoUri?.toString() ?: "", latitude, longitude, finalPrices)
                                 }
                             },
                             modifier = Modifier

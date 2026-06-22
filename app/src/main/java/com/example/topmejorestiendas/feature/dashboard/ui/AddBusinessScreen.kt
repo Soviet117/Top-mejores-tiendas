@@ -3,6 +3,7 @@ package com.example.topmejorestiendas.feature.dashboard.ui
 import android.net.Uri
 import android.Manifest
 import android.annotation.SuppressLint
+import android.location.Geocoder
 import android.location.Location
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,6 +26,7 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Store
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -68,6 +70,25 @@ fun AddBusinessScreen(
 
     var description by remember { mutableStateOf("") }
     var photoUri by remember { mutableStateOf<Uri?>(null) }
+
+    val showPricing = category == "Piscinas" || category == "Canchas Sintéticas"
+    val priceEntries = remember { mutableStateListOf<PriceEntry>() }
+    LaunchedEffect(category) {
+        if (showPricing && priceEntries.isEmpty()) {
+            when (category) {
+                "Piscinas" -> {
+                    priceEntries.add(PriceEntry("Adulto", ""))
+                    priceEntries.add(PriceEntry("Niños", ""))
+                }
+                "Canchas Sintéticas" -> {
+                    priceEntries.add(PriceEntry("Hora", ""))
+                    priceEntries.add(PriceEntry("Media hora", ""))
+                }
+            }
+        } else if (!showPricing) {
+            priceEntries.clear()
+        }
+    }
 
     val cropImageLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
         if (result.isSuccessful) {
@@ -247,6 +268,22 @@ fun AddBusinessScreen(
                     onLocationChanged = { lat, lon ->
                         latitude = lat
                         longitude = lon
+                        try {
+                            val geocoder = Geocoder(context, java.util.Locale.getDefault())
+                            @Suppress("DEPRECATION")
+                            val addresses = geocoder.getFromLocation(lat, lon, 1)
+                            if (!addresses.isNullOrEmpty()) {
+                                val addr = addresses[0]
+                                val parts = mutableListOf<String>()
+                                if (!addr.thoroughfare.isNullOrBlank()) parts.add(addr.thoroughfare)
+                                if (!addr.subThoroughfare.isNullOrBlank()) parts.add(addr.subThoroughfare)
+                                if (!addr.locality.isNullOrBlank()) parts.add(addr.locality)
+                                if (!addr.subAdminArea.isNullOrBlank()) parts.add(addr.subAdminArea)
+                                if (parts.isNotEmpty()) {
+                                    address = parts.joinToString(", ")
+                                }
+                            }
+                        } catch (_: Exception) { }
                     }
                 )
             }
@@ -281,6 +318,63 @@ fun AddBusinessScreen(
                 minLines = 3
             )
 
+            if (showPricing) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Precios",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        priceEntries.forEachIndexed { index, entry ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = entry.concept,
+                                    onValueChange = { priceEntries[index] = entry.copy(concept = it) },
+                                    label = { Text("Concepto") },
+                                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                                    singleLine = true
+                                )
+                                OutlinedTextField(
+                                    value = entry.price,
+                                    onValueChange = { priceEntries[index] = entry.copy(price = it) },
+                                    label = { Text("Precio (S/)") },
+                                    modifier = Modifier.weight(1f).padding(start = 8.dp),
+                                    singleLine = true
+                                )
+                                if (priceEntries.size > 1) {
+                                    IconButton(onClick = { priceEntries.removeAt(index) }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = "Eliminar",
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = { priceEntries.add(PriceEntry("", "")) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Agregar otra tarifa")
+                        }
+                    }
+                }
+            }
+
             if (uiState.error != null) {
                 Text(
                     text = uiState.error!!,
@@ -303,8 +397,11 @@ fun AddBusinessScreen(
                             "${state.name.take(3)}: Cerrado"
                         }
                     }
+                    val finalPrices = priceEntries
+                        .filter { it.concept.isNotBlank() && it.price.isNotBlank() }
+                        .joinToString(", ") { "${it.concept}: ${it.price}" }
                     viewModel.registerBusiness(
-                        name, category, address, finalSchedule, description, photoUri?.toString() ?: "", latitude, longitude
+                        name, category, address, finalSchedule, description, photoUri?.toString() ?: "", latitude, longitude, finalPrices
                     )
                 },
                 modifier = Modifier
@@ -331,6 +428,11 @@ data class ScheduleDayState(
     val isOpen: MutableState<Boolean>,
     val openTime: MutableState<String>,
     val closeTime: MutableState<String>
+)
+
+data class PriceEntry(
+    val concept: String,
+    val price: String
 )
 
 @OptIn(ExperimentalMaterial3Api::class)

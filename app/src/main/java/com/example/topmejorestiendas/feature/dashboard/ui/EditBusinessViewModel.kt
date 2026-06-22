@@ -56,7 +56,8 @@ class EditBusinessViewModel(application: Application) : AndroidViewModel(applica
         description: String,
         photoUri: String,
         latitude: Double,
-        longitude: Double
+        longitude: Double,
+        prices: String = ""
     ) {
         if (name.isBlank() || category.isBlank() || address.isBlank()) {
             _uiState.value = EditBusinessUiState.Error("Campos obligatorios vacíos.")
@@ -75,6 +76,7 @@ class EditBusinessViewModel(application: Application) : AndroidViewModel(applica
                     negocio.fotoNegocio = photoUri
                     negocio.latitud = latitude
                     negocio.longitud = longitude
+                    negocio.precios = prices.ifBlank { null }
                     
                     db.negocioDao().actualizar(negocio)
                     
