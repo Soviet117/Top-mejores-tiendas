@@ -28,9 +28,11 @@ android {
 
         val senderEmail = (localProperties.getProperty("SENDER_EMAIL") ?: "").replace("\"", "")
         val senderPassword = (localProperties.getProperty("SENDER_PASSWORD") ?: "").replace("\"", "")
+        val sunatToken = (localProperties.getProperty("SUNAT_BEARER_TOKEN") ?: "").replace("\"", "")
         
         buildConfigField("String", "SENDER_EMAIL", "\"$senderEmail\"")
         buildConfigField("String", "SENDER_PASSWORD", "\"$senderPassword\"")
+        buildConfigField("String", "SUNAT_BEARER_TOKEN", "\"$sunatToken\"")
     }
 
     buildTypes {

@@ -73,6 +73,9 @@ object EmailService {
                     }
                 })
 
+                // Activar modo debug para ver todo el tráfico SMTP en Logcat (busca "System.out" o "SMTP")
+                session.debug = true
+
                 val message = MimeMessage(session).apply {
                     setFrom(InternetAddress(EmailConfig.SENDER_EMAIL, EmailConfig.SENDER_DISPLAY_NAME))
                     setRecipient(Message.RecipientType.TO, InternetAddress(recipientEmail))
@@ -84,6 +87,7 @@ object EmailService {
 
                 Result.success(otpCode)
             } catch (e: Exception) {
+                android.util.Log.e("EmailService", "Error crítico al enviar correo: ${e.message}", e)
                 Result.failure(e)
             }
         }

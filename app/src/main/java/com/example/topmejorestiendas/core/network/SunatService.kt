@@ -112,8 +112,8 @@ object SunatService {
      */
     private fun parseResponse(json: JSONObject): SunatRucResponse {
         return SunatRucResponse(
-            ruc = json.optString("ruc", ""),
-            razonSocial = json.optString("nombre_o_razon_social", json.optString("razonSocial", "")),
+            ruc = json.optString("ruc", json.optString("numeroDocumento", "")),
+            razonSocial = json.optString("nombre_o_razon_social", json.optString("razonSocial", json.optString("nombre", ""))),
             estado = json.optString("estado", "DESCONOCIDO"),
             condicion = json.optString("condicion", "DESCONOCIDO"),
             direccion = json.optString("direccion", json.optString("direccion_completa", "")),
