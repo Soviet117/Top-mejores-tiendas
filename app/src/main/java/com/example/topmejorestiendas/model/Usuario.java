@@ -15,6 +15,8 @@ public class Usuario {
     public String fotoPerfil;
     public boolean esDuenio;
     public String ruc;
+    public boolean emailVerificado;
+    public String razonSocial;
 
     public Usuario(String nombreCompleto, String email, String contrasena, String telefono, String fotoPerfil, boolean esDuenio, String ruc) {
         this.nombreCompleto = nombreCompleto;
@@ -24,5 +26,7 @@ public class Usuario {
         this.fotoPerfil = fotoPerfil;
         this.esDuenio = esDuenio;
         this.ruc = ruc;
+        this.emailVerificado = false;
+        this.razonSocial = null;
     }
 }

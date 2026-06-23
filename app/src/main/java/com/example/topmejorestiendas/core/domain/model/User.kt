@@ -7,5 +7,7 @@ data class User(
     val phone: String,
     val profilePhotoUrl: String,
     val isOwner: Boolean,
-    val ruc: String? = null
+    val ruc: String? = null,
+    val emailVerified: Boolean = false,
+    val razonSocial: String? = null
 )

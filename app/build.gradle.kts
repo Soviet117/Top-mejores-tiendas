@@ -1,7 +1,16 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+}
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(FileInputStream(localPropertiesFile))
 }
 
 android {
@@ -16,6 +25,12 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val senderEmail = (localProperties.getProperty("SENDER_EMAIL") ?: "").replace("\"", "")
+        val senderPassword = (localProperties.getProperty("SENDER_PASSWORD") ?: "").replace("\"", "")
+        
+        buildConfigField("String", "SENDER_EMAIL", "\"$senderEmail\"")
+        buildConfigField("String", "SENDER_PASSWORD", "\"$senderPassword\"")
     }
 
     buildTypes {
@@ -37,6 +52,17 @@ android {
     buildFeatures {
         compose = true
         viewBinding = true
+        buildConfig = true
+    }
+    packaging {
+        resources {
+            excludes += setOf(
+                "META-INF/NOTICE.md",
+                "META-INF/LICENSE.md",
+                "META-INF/NOTICE.txt",
+                "META-INF/LICENSE.txt"
+            )
+        }
     }
 }
 
@@ -87,6 +113,10 @@ dependencies {
 
     // Image Cropper
     implementation("com.vanniktech:android-image-cropper:4.6.0")
+
+    // JavaMail for Email Verification
+    implementation("com.sun.mail:android-mail:1.6.7")
+    implementation("com.sun.mail:android-activation:1.6.7")
 
     // Hilt
 }

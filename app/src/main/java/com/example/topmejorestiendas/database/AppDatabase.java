@@ -12,7 +12,7 @@ import com.example.topmejorestiendas.model.Resena;
 import com.example.topmejorestiendas.model.Usuario;
 import java.util.concurrent.Executors;
 
-@Database(entities = {Usuario.class, Negocio.class, Resena.class, Reporte.class}, version = 7)
+@Database(entities = {Usuario.class, Negocio.class, Resena.class, Reporte.class}, version = 8)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract UsuarioDao usuarioDao();
     public abstract NegocioDao negocioDao();
