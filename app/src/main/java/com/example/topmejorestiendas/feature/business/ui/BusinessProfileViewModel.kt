@@ -151,6 +151,42 @@ class BusinessProfileViewModel(
             reporteDao.insertar(newReport)
         }
     }
+
+    fun createReservation(fecha: String, horaInicio: String, horaFin: String, onResult: (Boolean, String) -> Unit) {
+        val bId = businessId.toIntOrNull()
+        if (bId == null) {
+            onResult(false, "ID de negocio inválido")
+            return
+        }
+        val currentUserId = sessionManager.userId
+        if (currentUserId == -1 || currentUserId == -2) {
+            onResult(false, "Debes iniciar sesión para reservar")
+            return
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val reservaDao = db.reservaDao()
+                val nuevaReserva = com.example.topmejorestiendas.model.Reserva(
+                    bId,
+                    currentUserId,
+                    fecha,
+                    horaInicio,
+                    horaFin,
+                    "PENDIENTE",
+                    System.currentTimeMillis()
+                )
+                reservaDao.insert(nuevaReserva)
+                withContext(Dispatchers.Main) {
+                    onResult(true, "Reserva solicitada correctamente")
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    onResult(false, "Error al crear la reserva: ${e.message}")
+                }
+            }
+        }
+    }
 }
 
 class BusinessProfileViewModelFactory(

@@ -20,13 +20,16 @@ import androidx.compose.ui.unit.dp
 import com.example.topmejorestiendas.core.domain.model.Business
 import com.example.topmejorestiendas.core.designsystem.components.BusinessCard
 
+import androidx.compose.material.icons.filled.Email
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OwnerDashboardScreen(
     viewModel: OwnerDashboardViewModel,
     onNavigateToProfile: () -> Unit,
     onNavigateToAddBusiness: () -> Unit,
-    onNavigateToBusinessDetail: (String) -> Unit
+    onNavigateToBusinessDetail: (String) -> Unit,
+    onNavigateToInbox: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -40,6 +43,9 @@ fun OwnerDashboardScreen(
             TopAppBar(
                 title = { Text("Mis Negocios") },
                 actions = {
+                    IconButton(onClick = onNavigateToInbox) {
+                        Icon(Icons.Default.Email, contentDescription = "Bandeja de Reservas")
+                    }
                     IconButton(onClick = onNavigateToProfile) {
                         Icon(Icons.Default.AccountCircle, contentDescription = "Mi Perfil")
                     }

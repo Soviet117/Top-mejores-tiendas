@@ -120,7 +120,16 @@ fun AppNavHost(
                 onNavigateToAddBusiness = { navController.navigate("add_business") },
                 onNavigateToBusinessDetail = { businessId -> 
                     navController.navigate("manage_business/$businessId") 
-                }
+                },
+                onNavigateToInbox = { navController.navigate("reservations_inbox") }
+            )
+        }
+
+        composable("reservations_inbox") {
+            val inboxViewModel: com.example.topmejorestiendas.feature.dashboard.ui.ReservationsInboxViewModel = viewModel(factory = com.example.topmejorestiendas.feature.dashboard.ui.ReservationsInboxViewModelFactory(context))
+            com.example.topmejorestiendas.feature.dashboard.ui.ReservationsInboxScreen(
+                viewModel = inboxViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
@@ -165,12 +174,21 @@ fun AppNavHost(
                 viewModel = profileViewModel,
                 onNavigateToEditProfile = { navController.navigate("edit_profile") },
                 onNavigateToReviewHistory = { navController.navigate("review_history") },
+                onNavigateToReservations = { navController.navigate("client_reservations") },
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate("login") {
                         popUpTo(0)
                     }
                 }
+            )
+        }
+
+        composable("client_reservations") {
+            val clientReservationsViewModel: com.example.topmejorestiendas.feature.profile.ui.ClientReservationsViewModel = viewModel(factory = com.example.topmejorestiendas.feature.profile.ui.ClientReservationsViewModelFactory(context))
+            com.example.topmejorestiendas.feature.profile.ui.ClientReservationsScreen(
+                viewModel = clientReservationsViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

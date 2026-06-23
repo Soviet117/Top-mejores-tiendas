@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +27,7 @@ fun ProfileScreen(
     viewModel: ProfileViewModel,
     onNavigateToEditProfile: () -> Unit,
     onNavigateToReviewHistory: () -> Unit,
+    onNavigateToReservations: () -> Unit,
     onLogout: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -142,6 +144,17 @@ fun ProfileScreen(
                             Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Historial de Reseñas")
+                        }
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        OutlinedButton(
+                            onClick = onNavigateToReservations,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Event, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Mis Reservas")
                         }
                     }
                 }

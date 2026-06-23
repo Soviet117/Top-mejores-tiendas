@@ -10,14 +10,16 @@ import com.example.topmejorestiendas.model.Negocio;
 import com.example.topmejorestiendas.model.Reporte;
 import com.example.topmejorestiendas.model.Resena;
 import com.example.topmejorestiendas.model.Usuario;
+import com.example.topmejorestiendas.model.Reserva;
 import java.util.concurrent.Executors;
 
-@Database(entities = {Usuario.class, Negocio.class, Resena.class, Reporte.class}, version = 8)
+@Database(entities = {Usuario.class, Negocio.class, Resena.class, Reporte.class, Reserva.class}, version = 9)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract UsuarioDao usuarioDao();
     public abstract NegocioDao negocioDao();
     public abstract ResenaDao resenaDao();
     public abstract ReporteDao reporteDao();
+    public abstract ReservaDao reservaDao();
 
     private static volatile AppDatabase INSTANCE;
 
@@ -49,6 +51,9 @@ public abstract class AppDatabase extends RoomDatabase {
         db.negocioDao().eliminarTodos();
         db.resenaDao().eliminarTodos();
         db.reporteDao().eliminarTodos();
+        db.runInTransaction(() -> {
+            db.query("DELETE FROM reservas", null);
+        });
         // Base de datos vacía para empezar de cero según lo solicitado
     }
 }

@@ -12,6 +12,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -59,14 +61,26 @@ fun BusinessProfileScreen(
         return
     }
 
+    var showReservationDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         floatingActionButton = {
             if (!uiState.isGuest) {
-                ExtendedFloatingActionButton(
-                    onClick = { showRatingDialog = true },
-                    icon = { Icon(Icons.Filled.Star, contentDescription = if (isEditing) "Editar Reseña" else "Calificar") },
-                    text = { Text(if (isEditing) "Editar Reseña" else "Escribir Reseña") }
-                )
+                Column(horizontalAlignment = Alignment.End) {
+                    ExtendedFloatingActionButton(
+                        onClick = { showReservationDialog = true },
+                        icon = { Icon(Icons.Filled.Event, contentDescription = "Reservar") },
+                        text = { Text("Reservar Horario") },
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    ExtendedFloatingActionButton(
+                        onClick = { showRatingDialog = true },
+                        icon = { Icon(Icons.Filled.Star, contentDescription = if (isEditing) "Editar Reseña" else "Calificar") },
+                        text = { Text(if (isEditing) "Editar Reseña" else "Escribir Reseña") }
+                    )
+                }
             }
         }
     ) { paddingValues ->
@@ -299,7 +313,80 @@ fun BusinessProfileScreen(
                 }
             )
         }
+
+        if (showReservationDialog) {
+            ReservationDialog(
+                onDismiss = { showReservationDialog = false },
+                onSubmit = { fecha, horaInicio, horaFin ->
+                    viewModel.createReservation(fecha, horaInicio, horaFin) { success, message ->
+                        // Idealmente mostraríamos un Toast o Snackbar, pero como no tenemos ScaffoldState a la mano:
+                        // Podemos imprimir log o usar una variable de estado para snackbar.
+                    }
+                    showReservationDialog = false
+                }
+            )
+        }
     }
+}
+
+@Composable
+fun ReservationDialog(
+    onDismiss: () -> Unit,
+    onSubmit: (String, String, String) -> Unit
+) {
+    var fecha by remember { mutableStateOf("") }
+    var horaInicio by remember { mutableStateOf("") }
+    var horaFin by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Reservar Horario") },
+        text = {
+            Column {
+                Text("Ingresa los detalles para solicitar tu reserva.", style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = fecha,
+                    onValueChange = { fecha = it },
+                    label = { Text("Fecha (Ej. 2026-10-15)") },
+                    leadingIcon = { Icon(Icons.Filled.Event, contentDescription = "Fecha") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = horaInicio,
+                        onValueChange = { horaInicio = it },
+                        label = { Text("Inicio (Ej. 15:00)") },
+                        leadingIcon = { Icon(Icons.Filled.Schedule, contentDescription = "Hora inicio") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = horaFin,
+                        onValueChange = { horaFin = it },
+                        label = { Text("Fin (Ej. 16:00)") },
+                        leadingIcon = { Icon(Icons.Filled.Schedule, contentDescription = "Hora fin") },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onSubmit(fecha, horaInicio, horaFin) },
+                enabled = fecha.isNotBlank() && horaInicio.isNotBlank() && horaFin.isNotBlank()
+            ) {
+                Text("Solicitar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
 }
 
 @Composable
