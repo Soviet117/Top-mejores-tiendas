@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.topmejorestiendas.database.AppDatabase
-import com.example.topmejorestiendas.model.Reserva
+import com.example.topmejorestiendas.model.ReservaConDetalle
 import com.example.topmejorestiendas.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +17,7 @@ import kotlinx.coroutines.withContext
 
 data class ReservationsInboxState(
     val isLoading: Boolean = true,
-    val reservations: List<Reserva> = emptyList()
+    val reservations: List<ReservaConDetalle> = emptyList()
 )
 
 class ReservationsInboxViewModel(application: Application) : AndroidViewModel(application) {

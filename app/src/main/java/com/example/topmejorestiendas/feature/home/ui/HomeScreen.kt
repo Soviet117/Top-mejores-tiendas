@@ -163,7 +163,56 @@ fun HomeScreen(
                                 )
                             }
                             Spacer(modifier = Modifier.weight(1f))
-                            Text("${uiState.businesses.size} resultados", style = MaterialTheme.typography.bodySmall)
+                            Text("${uiState.businesses.size} resultados", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+
+                        if (uiState.selectedCategory != "Todo") {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "Rankear por:",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp)
+                                )
+                                LazyRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 16.dp)
+                                ) {
+                                    item {
+                                        FilterChip(
+                                            selected = uiState.selectedSortOption == "Destacados",
+                                            onClick = { viewModel.onSortOptionSelected("Destacados") },
+                                            label = { Text("Destacados") }
+                                        )
+                                    }
+                                    item {
+                                        FilterChip(
+                                            selected = uiState.selectedSortOption == "Costo",
+                                            onClick = { viewModel.onSortOptionSelected("Costo") },
+                                            label = { Text("Costo") }
+                                        )
+                                    }
+                                    item {
+                                        FilterChip(
+                                            selected = uiState.selectedSortOption == "Atención",
+                                            onClick = { viewModel.onSortOptionSelected("Atención") },
+                                            label = { Text("Atención") }
+                                        )
+                                    }
+                                    item {
+                                        FilterChip(
+                                            selected = uiState.selectedSortOption == "Producto",
+                                            onClick = { viewModel.onSortOptionSelected("Producto") },
+                                            label = { Text("Producto") }
+                                        )
+                                    }
+                                }
+                            }
                         }
 
                         if (uiState.businesses.isEmpty()) {

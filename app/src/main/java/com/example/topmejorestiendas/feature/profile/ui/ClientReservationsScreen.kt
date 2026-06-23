@@ -17,7 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.topmejorestiendas.model.Reserva
+import com.example.topmejorestiendas.model.ReservaConDetalle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,8 +64,8 @@ fun ClientReservationsScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(uiState.reservations) { reserva ->
-                    ClientReservationCard(reserva = reserva)
+                items(uiState.reservations) { reservaDetalle ->
+                    ClientReservationCard(reservaDetalle = reservaDetalle)
                 }
             }
         }
@@ -73,7 +73,8 @@ fun ClientReservationsScreen(
 }
 
 @Composable
-fun ClientReservationCard(reserva: Reserva) {
+fun ClientReservationCard(reservaDetalle: ReservaConDetalle) {
+    val reserva = reservaDetalle.reserva
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -86,7 +87,7 @@ fun ClientReservationCard(reserva: Reserva) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Cancha #${reserva.idNegocio}",
+                    text = reservaDetalle.nombreNegocio ?: "Negocio #${reserva.idNegocio}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )

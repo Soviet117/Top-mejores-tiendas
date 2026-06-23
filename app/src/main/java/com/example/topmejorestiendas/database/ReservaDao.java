@@ -15,14 +15,14 @@ public interface ReservaDao {
     @Insert
     long insert(Reserva reserva);
 
-    @Query("SELECT * FROM reservas WHERE idNegocio = :idNegocio ORDER BY fechaCreacion DESC")
-    List<Reserva> getReservasPorNegocio(int idNegocio);
+    @Query("SELECT r.*, n.nombreNegocio AS nombreNegocio, u.nombreCompleto AS nombreCliente, u.email AS emailCliente, u.telefono AS telefonoCliente FROM reservas r INNER JOIN negocios n ON r.idNegocio = n.id INNER JOIN usuarios u ON r.idUsuario = u.id WHERE r.idNegocio = :idNegocio ORDER BY r.fechaCreacion DESC")
+    List<com.example.topmejorestiendas.model.ReservaConDetalle> getReservasPorNegocio(int idNegocio);
 
-    @Query("SELECT * FROM reservas WHERE idUsuario = :idUsuario ORDER BY fechaCreacion DESC")
-    List<Reserva> getReservasPorUsuario(int idUsuario);
+    @Query("SELECT r.*, n.nombreNegocio AS nombreNegocio, u.nombreCompleto AS nombreCliente, u.email AS emailCliente, u.telefono AS telefonoCliente FROM reservas r INNER JOIN negocios n ON r.idNegocio = n.id INNER JOIN usuarios u ON r.idUsuario = u.id WHERE r.idUsuario = :idUsuario ORDER BY r.fechaCreacion DESC")
+    List<com.example.topmejorestiendas.model.ReservaConDetalle> getReservasPorUsuario(int idUsuario);
 
-    @Query("SELECT r.* FROM reservas r INNER JOIN negocios n ON r.idNegocio = n.id WHERE n.idDuenio = :idDuenio ORDER BY r.fechaCreacion DESC")
-    List<Reserva> getReservasPorDuenio(int idDuenio);
+    @Query("SELECT r.*, n.nombreNegocio AS nombreNegocio, u.nombreCompleto AS nombreCliente, u.email AS emailCliente, u.telefono AS telefonoCliente FROM reservas r INNER JOIN negocios n ON r.idNegocio = n.id INNER JOIN usuarios u ON r.idUsuario = u.id WHERE n.idDuenio = :idDuenio ORDER BY r.fechaCreacion DESC")
+    List<com.example.topmejorestiendas.model.ReservaConDetalle> getReservasPorDuenio(int idDuenio);
 
     @Query("SELECT * FROM reservas WHERE id = :idReserva")
     Reserva getReservaPorId(int idReserva);

@@ -20,7 +20,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.topmejorestiendas.model.Reserva
+import com.example.topmejorestiendas.model.ReservaConDetalle
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Phone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,11 +70,11 @@ fun ReservationsInboxScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(uiState.reservations) { reserva ->
+                items(uiState.reservations) { reservaDetalle ->
                     ReservationCard(
-                        reserva = reserva,
-                        onAccept = { viewModel.updateReservationStatus(reserva.id, "CONFIRMADA") },
-                        onReject = { viewModel.updateReservationStatus(reserva.id, "RECHAZADA") }
+                        reservaDetalle = reservaDetalle,
+                        onAccept = { viewModel.updateReservationStatus(reservaDetalle.reserva.id, "CONFIRMADA") },
+                        onReject = { viewModel.updateReservationStatus(reservaDetalle.reserva.id, "RECHAZADA") }
                     )
                 }
             }
@@ -81,10 +84,11 @@ fun ReservationsInboxScreen(
 
 @Composable
 fun ReservationCard(
-    reserva: Reserva,
+    reservaDetalle: ReservaConDetalle,
     onAccept: () -> Unit,
     onReject: () -> Unit
 ) {
+    val reserva = reservaDetalle.reserva
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -97,7 +101,7 @@ fun ReservationCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Usuario #${reserva.idUsuario}",
+                    text = reservaDetalle.nombreNegocio ?: "Local #${reserva.idNegocio}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -126,8 +130,44 @@ fun ReservationCard(
                 }
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Client Info
+            Text(
+                text = "Datos del Cliente:",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.secondary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = reservaDetalle.nombreCliente ?: "Cliente #${reserva.idUsuario}", style = MaterialTheme.typography.bodyMedium)
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Email, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = reservaDetalle.emailCliente ?: "Sin correo", style = MaterialTheme.typography.bodyMedium)
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Phone, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = reservaDetalle.telefonoCliente ?: "Sin teléfono", style = MaterialTheme.typography.bodyMedium)
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Reservation details
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.Event, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.width(8.dp))

@@ -22,6 +22,7 @@ data class HomeUiState(
     val categories: List<String> = listOf("Todo", "Restaurantes", "Canchas Sintéticas", "Piscinas", "Cafeterías", "Gimnasios", "Tiendas de Ropa", "Farmacias", "Supermercados", "Otros"),
     val selectedCategory: String = "Todo",
     val searchQuery: String = "",
+    val selectedSortOption: String = "Destacados",
     val error: String? = null
 )
 
@@ -40,14 +41,25 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onCategorySelected(category: String) {
         if (_uiState.value.selectedCategory != category) {
-            _uiState.value = _uiState.value.copy(selectedCategory = category, isLoading = true)
+            _uiState.value = _uiState.value.copy(
+                selectedCategory = category, 
+                selectedSortOption = "Destacados",
+                isLoading = true
+            )
             fetchBusinesses()
+        }
+    }
+
+    fun onSortOptionSelected(option: String) {
+        if (_uiState.value.selectedSortOption != option) {
+            _uiState.value = _uiState.value.copy(selectedSortOption = option)
+            applySortingAndFiltering()
         }
     }
 
     fun onSearchQueryChanged(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
-        filterLocalList()
+        applySortingAndFiltering()
     }
 
     fun toggleFavorite(businessId: String) {
@@ -85,7 +97,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         businesses = originalList,
                         error = null
                     )
-                    filterLocalList() // Aplicar búsqueda de texto si la hay
+                    applySortingAndFiltering() // Aplicar búsqueda de texto y ordenación
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
@@ -98,14 +110,24 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun filterLocalList() {
+    private fun applySortingAndFiltering() {
         val query = _uiState.value.searchQuery
-        val filtered = if (query.isBlank()) {
+        val sortOption = _uiState.value.selectedSortOption
+
+        var list = if (query.isBlank()) {
             originalList
         } else {
             originalList.filter { it.name.contains(query, ignoreCase = true) }
         }
-        _uiState.value = _uiState.value.copy(businesses = filtered)
+
+        list = when (sortOption) {
+            "Costo" -> list.sortedByDescending { it.ratingCosto }
+            "Atención" -> list.sortedByDescending { it.ratingAtencion }
+            "Producto" -> list.sortedByDescending { it.ratingProducto }
+            else -> list.sortedByDescending { it.isFavorite }
+        }
+
+        _uiState.value = _uiState.value.copy(businesses = list)
     }
 }
 
