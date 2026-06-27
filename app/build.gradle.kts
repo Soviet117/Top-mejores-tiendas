@@ -33,6 +33,9 @@ android {
         buildConfigField("String", "SENDER_EMAIL", "\"$senderEmail\"")
         buildConfigField("String", "SENDER_PASSWORD", "\"$senderPassword\"")
         buildConfigField("String", "SUNAT_BEARER_TOKEN", "\"$sunatToken\"")
+
+        val backendUrl = (localProperties.getProperty("BACKEND_URL") ?: "http://10.0.2.2:3000").replace("\"", "")
+        buildConfigField("String", "BACKEND_URL", "\"$backendUrl\"")
     }
 
     buildTypes {
@@ -119,6 +122,13 @@ dependencies {
     // JavaMail for Email Verification
     implementation("com.sun.mail:android-mail:1.6.7")
     implementation("com.sun.mail:android-activation:1.6.7")
+
+    // Retrofit + OkHttp (red hacia el backend)
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("com.google.code.gson:gson:2.11.0")
 
     // Hilt
 }

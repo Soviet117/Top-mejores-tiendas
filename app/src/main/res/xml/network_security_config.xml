@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Permitir HTTP solo al emulador local durante desarrollo -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">localhost</domain>
+    </domain-config>
+    <!-- Render.com y cualquier otro host solo aceptará HTTPS, así que es seguro por defecto -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
+</network-security-config>

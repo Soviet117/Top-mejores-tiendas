@@ -1,0 +1,108 @@
+// ============================================================
+//  UbiTop — Prisma Schema para PostgreSQL
+//  Autor: UbiTop Dev Team
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+//  USUARIOS
+// ============================================================
+model Usuario {
+  id               Int       @id @default(autoincrement())
+  nombreCompleto   String
+  email            String    @unique
+  contrasena       String    // Hash bcrypt
+  telefono         String?
+  fotoPerfil       String?   // URL de Cloudinary
+  esDuenio         Boolean   @default(false)
+  ruc              String?
+  razonSocial      String?
+  emailVerificado  Boolean   @default(false)
+  tokenVerificacion String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relaciones
+  negocios  Negocio[]
+  resenas   Resena[]
+  reservas  Reserva[]
+
+  @@map("usuarios")
+}
+
+// ============================================================
+//  NEGOCIOS
+// ============================================================
+model Negocio {
+  id                   Int      @id @default(autoincrement())
+  nombreNegocio        String
+  rubro                String
+  direccion            String
+  horario              String?
+  calificacionPromedio Float    @default(0)
+  latitud              Float?
+  longitud             Float?
+  fotoNegocio          String?  // URL de Cloudinary
+  descripcion          String?
+  precios              String?  // JSON con tabla de precios
+  idDuenio             Int
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relaciones
+  duenio   Usuario   @relation(fields: [idDuenio], references: [id], onDelete: Cascade)
+  resenas  Resena[]
+  reservas Reserva[]
+
+  @@map("negocios")
+}
+
+// ============================================================
+//  RESEÑAS
+// ============================================================
+model Resena {
+  id               Int      @id @default(autoincrement())
+  idUsuario        Int
+  idNegocio        Int
+  calificacion     Int      // 1-5 estrellas general
+  calidadAtencion  Int      // 1-5
+  calidadProductos Int      // 1-5
+  costos           Int      // 1-5
+  comentario       String?
+  respuestaDuenio  String?
+  fecha            DateTime @default(now())
+
+  // Relaciones
+  usuario  Usuario @relation(fields: [idUsuario], references: [id], onDelete: Cascade)
+  negocio  Negocio @relation(fields: [idNegocio], references: [id], onDelete: Cascade)
+
+  @@map("resenas")
+}
+
+// ============================================================
+//  RESERVAS
+// ============================================================
+model Reserva {
+  id           Int      @id @default(autoincrement())
+  idNegocio    Int
+  idUsuario    Int
+  fecha        String   // Formato: YYYY-MM-DD
+  horaInicio   String   // Formato: HH:MM
+  horaFin      String   // Formato: HH:MM
+  estado       String   @default("PENDIENTE") // PENDIENTE | CONFIRMADA | RECHAZADA | CANCELADA
+  fechaCreacion DateTime @default(now())
+
+  // Relaciones
+  negocio  Negocio @relation(fields: [idNegocio], references: [id], onDelete: Cascade)
+  usuario  Usuario @relation(fields: [idUsuario], references: [id], onDelete: Cascade)
+
+  @@map("reservas")
+}
