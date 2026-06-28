@@ -81,7 +81,8 @@ public class RegistroUsuarioActivity extends AppCompatActivity {
                             body.getUser().getId(),
                             body.getUser().getEsDuenio(),
                             body.getUser().getNombreCompleto(),
-                            body.getUser().getEmail()
+                            body.getUser().getEmail(),
+                            body.getUser().getFotoPerfil() != null ? body.getUser().getFotoPerfil() : ""
                     );
                     Toast.makeText(RegistroUsuarioActivity.this, "Registro exitoso", Toast.LENGTH_SHORT).show();
                     finish();

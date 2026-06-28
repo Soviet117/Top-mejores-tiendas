@@ -30,6 +30,8 @@ import com.example.topmejorestiendas.feature.common.ui.OsmMap
 import com.example.topmejorestiendas.model.Resena
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlinx.coroutines.launch
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,8 +64,11 @@ fun BusinessProfileScreen(
     }
 
     var showReservationDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             if (!uiState.isGuest) {
                 Column(horizontalAlignment = Alignment.End) {
@@ -319,8 +324,12 @@ fun BusinessProfileScreen(
                 onDismiss = { showReservationDialog = false },
                 onSubmit = { fecha, horaInicio, horaFin ->
                     viewModel.createReservation(fecha, horaInicio, horaFin) { success, message ->
-                        // Idealmente mostraríamos un Toast o Snackbar, pero como no tenemos ScaffoldState a la mano:
-                        // Podemos imprimir log o usar una variable de estado para snackbar.
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar(
+                                message = message,
+                                duration = SnackbarDuration.Short
+                            )
+                        }
                     }
                     showReservationDialog = false
                 }
@@ -329,65 +338,238 @@ fun BusinessProfileScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReservationDialog(
     onDismiss: () -> Unit,
     onSubmit: (String, String, String) -> Unit
 ) {
-    var fecha by remember { mutableStateOf("") }
-    var horaInicio by remember { mutableStateOf("") }
-    var horaFin by remember { mutableStateOf("") }
+    // ── Estado interno ────────────────────────────────────────────
+    val calendar = remember { Calendar.getInstance() }
 
+    // DatePicker state — default a hoy
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = calendar.timeInMillis
+    )
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    // TimePicker estados — inicio y fin
+    val timePickerStateInicio = rememberTimePickerState(
+        initialHour = 8,
+        initialMinute = 0,
+        is24Hour = true
+    )
+    val timePickerStateFin = rememberTimePickerState(
+        initialHour = 9,
+        initialMinute = 0,
+        is24Hour = true
+    )
+    var showTimePickerInicio by remember { mutableStateOf(false) }
+    var showTimePickerFin by remember { mutableStateOf(false) }
+
+    // ── Formateo de valores legibles ──────────────────────────────
+    val fechaDisplay = remember(datePickerState.selectedDateMillis) {
+        datePickerState.selectedDateMillis?.let {
+            SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(it))
+        } ?: "Seleccionar fecha"
+    }
+    val fechaApi = remember(datePickerState.selectedDateMillis) {
+        datePickerState.selectedDateMillis?.let {
+            // Ajustar a medianoche UTC para evitar desfase por zona horaria
+            val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+            cal.timeInMillis = it
+            String.format("%04d-%02d-%02d", cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))
+        } ?: ""
+    }
+    val horaInicioDisplay = remember(timePickerStateInicio.hour, timePickerStateInicio.minute) {
+        String.format("%02d:%02d", timePickerStateInicio.hour, timePickerStateInicio.minute)
+    }
+    val horaFinDisplay = remember(timePickerStateFin.hour, timePickerStateFin.minute) {
+        String.format("%02d:%02d", timePickerStateFin.hour, timePickerStateFin.minute)
+    }
+
+    val isValid = fechaApi.isNotBlank() &&
+            (timePickerStateFin.hour > timePickerStateInicio.hour ||
+                    (timePickerStateFin.hour == timePickerStateInicio.hour && timePickerStateFin.minute > timePickerStateInicio.minute))
+
+    // ── Diálogos nativos ──────────────────────────────────────────
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Aceptar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showTimePickerInicio) {
+        TimePickerDialog(
+            onDismiss = { showTimePickerInicio = false },
+            onConfirm = { showTimePickerInicio = false },
+            title = "Hora de inicio"
+        ) {
+            TimePicker(state = timePickerStateInicio)
+        }
+    }
+
+    if (showTimePickerFin) {
+        TimePickerDialog(
+            onDismiss = { showTimePickerFin = false },
+            onConfirm = { showTimePickerFin = false },
+            title = "Hora de fin"
+        ) {
+            TimePicker(state = timePickerStateFin)
+        }
+    }
+
+    // ── Diálogo principal ─────────────────────────────────────────
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Reservar Horario") },
-        text = {
-            Column {
-                Text("Ingresa los detalles para solicitar tu reserva.", style = MaterialTheme.typography.bodyMedium)
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = fecha,
-                    onValueChange = { fecha = it },
-                    label = { Text("Fecha (Ej. 2026-10-15)") },
-                    leadingIcon = { Icon(Icons.Filled.Event, contentDescription = "Fecha") },
-                    modifier = Modifier.fillMaxWidth()
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Filled.Event,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Reservar Horario", style = MaterialTheme.typography.titleLarge)
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    "Selecciona la fecha y el horario que deseas reservar.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Selector de Fecha
+                OutlinedTextField(
+                    value = fechaDisplay,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Fecha") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Event, contentDescription = "Fecha", tint = MaterialTheme.colorScheme.primary)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDatePicker = true },
+                    enabled = false,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledBorderColor = MaterialTheme.colorScheme.outline,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        disabledLeadingIconColor = MaterialTheme.colorScheme.primary,
+                    )
+                )
+
+                // Selectors de Hora en fila
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     OutlinedTextField(
-                        value = horaInicio,
-                        onValueChange = { horaInicio = it },
-                        label = { Text("Inicio (Ej. 15:00)") },
-                        leadingIcon = { Icon(Icons.Filled.Schedule, contentDescription = "Hora inicio") },
-                        modifier = Modifier.weight(1f)
+                        value = horaInicioDisplay,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Inicio") },
+                        leadingIcon = {
+                            Icon(Icons.Filled.Schedule, contentDescription = "Hora inicio", tint = MaterialTheme.colorScheme.primary)
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { showTimePickerInicio = true },
+                        enabled = false,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                            disabledBorderColor = MaterialTheme.colorScheme.outline,
+                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            disabledLeadingIconColor = MaterialTheme.colorScheme.primary,
+                        )
                     )
                     OutlinedTextField(
-                        value = horaFin,
-                        onValueChange = { horaFin = it },
-                        label = { Text("Fin (Ej. 16:00)") },
-                        leadingIcon = { Icon(Icons.Filled.Schedule, contentDescription = "Hora fin") },
-                        modifier = Modifier.weight(1f)
+                        value = horaFinDisplay,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Fin") },
+                        leadingIcon = {
+                            Icon(Icons.Filled.Schedule, contentDescription = "Hora fin", tint = MaterialTheme.colorScheme.primary)
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { showTimePickerFin = true },
+                        enabled = false,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                            disabledBorderColor = MaterialTheme.colorScheme.outline,
+                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            disabledLeadingIconColor = MaterialTheme.colorScheme.primary,
+                        )
+                    )
+                }
+
+                if (!isValid && fechaApi.isNotBlank()) {
+                    Text(
+                        "La hora de fin debe ser posterior a la hora de inicio.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
             }
         },
         confirmButton = {
             Button(
-                onClick = { onSubmit(fecha, horaInicio, horaFin) },
-                enabled = fecha.isNotBlank() && horaInicio.isNotBlank() && horaFin.isNotBlank()
+                onClick = { onSubmit(fechaApi, horaInicioDisplay, horaFinDisplay) },
+                enabled = isValid
             ) {
-                Text("Solicitar")
+                Text("Solicitar Reserva")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar")
-            }
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
         }
     )
 }
+
+// ── Helper: envoltorio de diálogo para el TimePicker ─────────────
+@Composable
+fun TimePickerDialog(
+    title: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(title)
+            }
+        },
+        text = {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                content()
+            }
+        },
+        confirmButton = {
+            Button(onClick = onConfirm) { Text("Aceptar") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
+        }
+    )
+}
+
 
 @Composable
 fun ReviewCard(review: Resena) {

@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.topmejorestiendas.core.domain.mapper.toDomainModel
 import com.example.topmejorestiendas.data.repository.NegocioRepository
+import com.example.topmejorestiendas.data.repository.ReservaRepository
 import com.example.topmejorestiendas.model.Negocio
 import com.example.topmejorestiendas.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
@@ -19,18 +20,36 @@ import kotlinx.coroutines.withContext
 data class OwnerDashboardState(
     val isLoading: Boolean = true,
     val businesses: List<Negocio> = emptyList(),
-    val error: String? = null
+    val error: String? = null,
+    val pendingReservasCount: Int = 0,
+    val profilePhotoUrl: String = ""
 )
 
 class OwnerDashboardViewModel(application: Application) : AndroidViewModel(application) {
     private val negocioRepository = NegocioRepository(application)
+    private val reservaRepository = ReservaRepository(application)
     private val sessionManager = SessionManager(application)
     
     private val _uiState = MutableStateFlow(OwnerDashboardState())
     val uiState: StateFlow<OwnerDashboardState> = _uiState.asStateFlow()
 
     init {
+        _uiState.value = _uiState.value.copy(
+            profilePhotoUrl = sessionManager.getProfilePhoto()
+        )
         loadBusinesses()
+        loadPendingReservasCount()
+    }
+
+    private fun loadPendingReservasCount() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = reservaRepository.getPendingReservasCount()
+            withContext(Dispatchers.Main) {
+                result.onSuccess { count ->
+                    _uiState.value = _uiState.value.copy(pendingReservasCount = count)
+                }
+            }
+        }
     }
 
     fun loadBusinesses() {

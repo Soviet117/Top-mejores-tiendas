@@ -195,6 +195,12 @@ data class UpdateEstadoRequest(
     @SerializedName("estado") val estado: String
 )
 
+// ─── Reservas Pending Count ──────────────────────────────
+
+data class PendingCountResponse(
+    @SerializedName("count") val count: Int
+)
+
 // ─── Generic ───────────────────────────────────────────────
 
 data class MessageResponse(

@@ -13,6 +13,20 @@ class ReservaRepository(context: Context) {
     private val sessionManager = SessionManager(context)
     private val token get() = RetrofitClient.bearerToken(sessionManager.authToken ?: "")
 
+    /** Conteo de reservas PENDIENTE para el badge del inbox */
+    suspend fun getPendingReservasCount(): Result<Int> {
+        return try {
+            val response = api.getPendingReservasCount(token)
+            if (response.isSuccessful) {
+                Result.success(response.body()!!.count)
+            } else {
+                Result.failure(Exception("Error al obtener conteo (${response.code()})"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Sin conexión. Verifica tu internet."))
+        }
+    }
+
     /** Historial del cliente autenticado */
     suspend fun getReservasCliente(): Result<List<ReservaDto>> {
         return try {

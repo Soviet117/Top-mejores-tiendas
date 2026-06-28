@@ -109,6 +109,11 @@ interface ApiService {
     ): Response<MessageResponse>
 
     // ─── RESERVAS ──────────────────────────────────────────────
+    @GET("api/reservas/inbox/pending-count")
+    suspend fun getPendingReservasCount(
+        @Header("Authorization") token: String
+    ): Response<PendingCountResponse>
+
     @GET("api/reservas/cliente")
     suspend fun getReservasCliente(
         @Header("Authorization") token: String

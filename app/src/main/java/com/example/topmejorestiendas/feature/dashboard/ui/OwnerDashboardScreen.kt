@@ -3,6 +3,7 @@ package com.example.topmejorestiendas.feature.dashboard.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
@@ -14,9 +15,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.example.topmejorestiendas.core.domain.model.Business
 import com.example.topmejorestiendas.core.designsystem.components.BusinessCard
 
@@ -44,10 +48,29 @@ fun OwnerDashboardScreen(
                 title = { Text("Mis Negocios") },
                 actions = {
                     IconButton(onClick = onNavigateToInbox) {
-                        Icon(Icons.Default.Email, contentDescription = "Bandeja de Reservas")
+                        BadgedBox(
+                            badge = {
+                                if (uiState.pendingReservasCount > 0) {
+                                    Badge()
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.Email, contentDescription = "Bandeja de Reservas")
+                        }
                     }
                     IconButton(onClick = onNavigateToProfile) {
-                        Icon(Icons.Default.AccountCircle, contentDescription = "Mi Perfil")
+                        if (uiState.profilePhotoUrl.isNotEmpty()) {
+                            AsyncImage(
+                                model = uiState.profilePhotoUrl,
+                                contentDescription = "Mi Perfil",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(CircleShape)
+                            )
+                        } else {
+                            Icon(Icons.Default.AccountCircle, contentDescription = "Mi Perfil")
+                        }
                     }
                 }
             )

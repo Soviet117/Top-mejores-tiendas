@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getReservasCliente,
   getReservasInbox,
+  getPendingReservasCount,
   createReserva,
   updateEstadoReserva,
   cancelarReserva,
@@ -12,6 +13,9 @@ export const reservasRoutes = Router();
 
 // GET /api/reservas/cliente  (historial del cliente autenticado)
 reservasRoutes.get('/cliente', requireAuth, getReservasCliente);
+
+// GET /api/reservas/inbox/pending-count  (conteo de pendientes para badge)
+reservasRoutes.get('/inbox/pending-count', requireAuth, requireOwner, getPendingReservasCount);
 
 // GET /api/reservas/inbox  (inbox del dueño autenticado)
 reservasRoutes.get('/inbox', requireAuth, requireOwner, getReservasInbox);

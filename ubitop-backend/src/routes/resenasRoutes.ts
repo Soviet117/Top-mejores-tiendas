@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getResenas,
+  getMisResenas,
   createResena,
   responderResena,
   deleteResena,
@@ -12,6 +13,9 @@ export const resenasRoutes = Router();
 // GET /api/resenas?negocioId=X  (público)
 resenasRoutes.get('/', getResenas);
 
+// GET /api/resenas/mias  (requiere auth, historial de reseñas del cliente)
+resenasRoutes.get('/mias', requireAuth, getMisResenas);
+
 // POST /api/resenas  (requiere auth de cliente)
 resenasRoutes.post('/', requireAuth, createResena);
 
@@ -20,3 +24,4 @@ resenasRoutes.patch('/:id/respuesta', requireAuth, requireOwner, responderResena
 
 // DELETE /api/resenas/:id  (solo el autor de la reseña)
 resenasRoutes.delete('/:id', requireAuth, deleteResena);
+

@@ -43,6 +43,23 @@ export const getReservasCliente = async (req: AuthenticatedRequest, res: Respons
   }
 };
 
+// ─── GET /api/reservas/inbox/pending-count ───────────────────
+// Conteo ligero de reservas PENDIENTE para el badge de notificación
+export const getPendingReservasCount = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const count = await prisma.reserva.count({
+      where: {
+        negocio: { idDuenio: req.user!.id },
+        estado: 'PENDIENTE',
+      },
+    });
+    res.status(200).json({ count });
+  } catch (error) {
+    console.error('[RESERVAS] getPendingReservasCount error:', error);
+    res.status(500).json({ error: 'Error al obtener conteo de reservas pendientes' });
+  }
+};
+
 // ─── GET /api/reservas/inbox ─────────────────────────────────
 // Inbox del dueño — todas las reservas de sus negocios
 export const getReservasInbox = async (req: AuthenticatedRequest, res: Response): Promise<void> => {

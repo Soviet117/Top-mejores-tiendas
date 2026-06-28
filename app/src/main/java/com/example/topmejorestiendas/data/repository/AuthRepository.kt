@@ -34,7 +34,8 @@ class AuthRepository(context: Context) {
                     body.user.id,
                     body.user.esDuenio,
                     body.user.nombreCompleto,
-                    body.user.email
+                    body.user.email,
+                    body.user.fotoPerfil ?: ""
                 )
                 Result.success(body)
             } else {
@@ -81,7 +82,8 @@ class AuthRepository(context: Context) {
                     body.user.id,
                     body.user.esDuenio,
                     body.user.nombreCompleto,
-                    body.user.email
+                    body.user.email,
+                    body.user.fotoPerfil ?: ""
                 )
                 Result.success(body)
             } else {
@@ -125,7 +127,9 @@ class AuthRepository(context: Context) {
             val request = UpdateProfileRequest(nombreCompleto, telefono, fotoPerfil, ruc)
             val response = api.updateProfile(RetrofitClient.bearerToken(token), request)
             if (response.isSuccessful) {
-                Result.success(response.body()!!.user)
+                val user = response.body()!!.user
+                user.fotoPerfil?.let { sessionManager.setProfilePhoto(it) }
+                Result.success(user)
             } else {
                 Result.failure(Exception("Error al actualizar perfil"))
             }

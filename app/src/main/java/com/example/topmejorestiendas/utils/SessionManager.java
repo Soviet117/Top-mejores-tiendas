@@ -18,10 +18,11 @@ public class SessionManager {
     private static final String KEY_IS_LOGGED_IN = "isLoggedIn";
     private static final String KEY_FAVORITES  = "favorites";
     // Claves nuevas para el backend
-    private static final String KEY_AUTH_TOKEN = "authToken";
-    private static final String KEY_USER_NAME  = "userName";
-    private static final String KEY_USER_EMAIL = "userEmail";
-    private static final String KEY_IS_OWNER   = "isOwner";
+    private static final String KEY_AUTH_TOKEN    = "authToken";
+    private static final String KEY_USER_NAME     = "userName";
+    private static final String KEY_USER_EMAIL    = "userEmail";
+    private static final String KEY_IS_OWNER      = "isOwner";
+    private static final String KEY_PROFILE_PHOTO = "profilePhoto";
 
     private final SharedPreferences pref;
     private final SharedPreferences.Editor editor;
@@ -36,12 +37,13 @@ public class SessionManager {
     /**
      * Guarda todos los datos de sesión después del login/registro exitoso.
      */
-    public void saveSession(String token, int userId, boolean isOwner, String userName, String userEmail) {
+    public void saveSession(String token, int userId, boolean isOwner, String userName, String userEmail, String fotoPerfil) {
         editor.putString(KEY_AUTH_TOKEN, token);
         editor.putInt(KEY_USER_ID, userId);
         editor.putBoolean(KEY_IS_OWNER, isOwner);
         editor.putString(KEY_USER_NAME, userName);
         editor.putString(KEY_USER_EMAIL, userEmail);
+        editor.putString(KEY_PROFILE_PHOTO, fotoPerfil);
         editor.putBoolean(KEY_IS_LOGGED_IN, true);
         editor.apply();
     }
@@ -69,6 +71,15 @@ public class SessionManager {
 
     public boolean isOwner() {
         return pref.getBoolean(KEY_IS_OWNER, false);
+    }
+
+    public String getProfilePhoto() {
+        return pref.getString(KEY_PROFILE_PHOTO, "");
+    }
+
+    public void setProfilePhoto(String fotoPerfil) {
+        editor.putString(KEY_PROFILE_PHOTO, fotoPerfil);
+        editor.apply();
     }
 
     // ─── API legacy (compatibilidad con código existente) ──────
