@@ -4,7 +4,10 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.Rect
+import android.graphics.RectF
+import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -185,12 +188,28 @@ private fun StoreMapView(
             }
         }
 
+        val photoBitmaps = mutableMapOf<String, Bitmap?>()
         for (business in validBusinesses) {
-            val letter = business.name.firstOrNull()?.uppercase() ?: "?"
-            val bitmap = createTextCircleBitmap(56, "#E53935", letter, mv.context)
+            if (business.imageUrl.isNotEmpty()) {
+                val bitmap = try {
+                    val base64 = business.imageUrl.substringAfter("base64,").trim()
+                    val imageBytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT)
+                    BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                } catch (_: Exception) { null }
+                photoBitmaps[business.id] = bitmap
+            }
+        }
+
+        for (business in validBusinesses) {
+            val rawPhoto = photoBitmaps[business.id]
+            val swPhoto = rawPhoto?.let {
+                if (it.config != Bitmap.Config.ARGB_8888) it.copy(Bitmap.Config.ARGB_8888, false)
+                else it
+            }
+            val bitmap = createBusinessMarkerBitmap(swPhoto, business.category, mv.context)
             Marker(mv).apply {
                 position = GeoPoint(business.latitude, business.longitude)
-                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                setAnchor(Marker.ANCHOR_CENTER, 1f)
                 title = business.name
                 snippet = business.distanceText
                 relatedObject = business
@@ -280,13 +299,92 @@ private fun createPhotoCircleBitmap(photo: Bitmap, ctx: Context): Bitmap {
     paint.color = android.graphics.Color.WHITE
     canvas.drawCircle((pxSize / 2).toFloat(), (pxSize / 2).toFloat(), (pxSize / 2).toFloat(), paint)
 
-    val path = android.graphics.Path().apply {
-        addCircle((pxSize / 2).toFloat(), (pxSize / 2).toFloat(), (pxSize / 2 - 3).toFloat(), android.graphics.Path.Direction.CW)
+    val path = Path().apply {
+        addCircle((pxSize / 2).toFloat(), (pxSize / 2).toFloat(), (pxSize / 2 - 3).toFloat(), Path.Direction.CW)
     }
     canvas.save()
     canvas.clipPath(path)
     canvas.drawBitmap(swPhoto, Rect(0, 0, swPhoto.width, swPhoto.height), Rect(3, 3, pxSize - 3, pxSize - 3), null)
     canvas.restore()
+
+    return bitmap
+}
+
+private fun getCategoryColor(category: String): Int {
+    return when (category.lowercase().trim()) {
+        "restaurante" -> 0xFFE53935.toInt()
+        "cafetería", "cafeteria" -> 0xFF795548.toInt()
+        "cancha sintética", "cancha sintetico", "cancha" -> 0xFF43A047.toInt()
+        "bar" -> 0xFF5C6BC0.toInt()
+        "pizzería", "pizzeria" -> 0xFFFF9800.toInt()
+        "heladería", "heladeria" -> 0xFFEC407A.toInt()
+        "panadería", "panaderia" -> 0xFFFFA726.toInt()
+        "gimnasio" -> 0xFF7B1FA2.toInt()
+        "salón de belleza", "salon de belleza", "peluquería", "peluqueria" -> 0xFFE91E63.toInt()
+        "licorería", "licoreria" -> 0xFF607D8B.toInt()
+        "farmacia" -> 0xFF00BCD4.toInt()
+        "supermercado" -> 0xFF4CAF50.toInt()
+        "librería", "libreria" -> 0xFFFF5722.toInt()
+        else -> 0xFF757575.toInt()
+    }
+}
+
+private fun createBusinessMarkerBitmap(photo: Bitmap?, category: String, ctx: Context): Bitmap {
+    val density = ctx.resources.displayMetrics.density
+    val photoWidthPx = (64 * density).toInt()
+    val barHeightPx = (18 * density).toInt()
+    val totalHeightPx = photoWidthPx + barHeightPx
+    val radiusPx = (8 * density).toInt()
+    val categoryColor = getCategoryColor(category)
+    val shortCategory = category.split(" ").first().take(8)
+
+    val bitmap = Bitmap.createBitmap(photoWidthPx, totalHeightPx, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+
+    val roundRect = RectF(0f, 0f, photoWidthPx.toFloat(), totalHeightPx.toFloat())
+    val clipPath = Path().apply {
+        addRoundRect(roundRect, radiusPx.toFloat(), radiusPx.toFloat(), Path.Direction.CW)
+    }
+    canvas.clipPath(clipPath)
+
+    if (photo != null) {
+        val srcRect: Rect
+        val dstRect = Rect(0, 0, photoWidthPx, photoWidthPx)
+        val photoAspect = photo.width.toFloat() / photo.height.toFloat()
+        if (photoAspect > 1f) {
+            val cropWidth = photo.height
+            val cropLeft = (photo.width - cropWidth) / 2
+            srcRect = Rect(cropLeft, 0, cropLeft + cropWidth, photo.height)
+        } else {
+            val cropHeight = photo.width
+            val cropTop = (photo.height - cropHeight) / 2
+            srcRect = Rect(0, cropTop, photo.width, cropTop + cropHeight)
+        }
+        canvas.drawBitmap(photo, srcRect, dstRect, null)
+    } else {
+        val circlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = categoryColor }
+        canvas.drawCircle(photoWidthPx / 2f, photoWidthPx / 2f, photoWidthPx / 2f, circlePaint)
+        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = android.graphics.Color.WHITE
+            textSize = photoWidthPx * 0.5f
+            textAlign = Paint.Align.CENTER
+            isFakeBoldText = true
+        }
+        val yPos = photoWidthPx / 2f - ((textPaint.descent() + textPaint.ascent()) / 2f)
+        canvas.drawText(shortCategory.first().uppercase(), photoWidthPx / 2f, yPos, textPaint)
+    }
+
+    val barPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = categoryColor }
+    canvas.drawRect(0f, photoWidthPx.toFloat(), photoWidthPx.toFloat(), totalHeightPx.toFloat(), barPaint)
+
+    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE
+        textSize = (11 * density).toFloat()
+        textAlign = Paint.Align.CENTER
+        isFakeBoldText = true
+    }
+    val textY = photoWidthPx + (barHeightPx / 2f) - ((textPaint.descent() + textPaint.ascent()) / 2f)
+    canvas.drawText(shortCategory, photoWidthPx / 2f, textY, textPaint)
 
     return bitmap
 }
