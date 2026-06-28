@@ -5,6 +5,9 @@ import com.example.topmejorestiendas.data.remote.RetrofitClient
 import com.example.topmejorestiendas.data.remote.dto.AuthResponse
 import com.example.topmejorestiendas.data.remote.dto.LoginRequest
 import com.example.topmejorestiendas.data.remote.dto.RegisterRequest
+import com.example.topmejorestiendas.data.remote.dto.UpdateProfileRequest
+import com.example.topmejorestiendas.data.remote.dto.UpdatePasswordRequest
+import com.example.topmejorestiendas.data.remote.dto.DeleteAccountRequest
 import com.example.topmejorestiendas.data.remote.dto.UsuarioDto
 import com.example.topmejorestiendas.utils.SessionManager
 
@@ -105,6 +108,59 @@ class AuthRepository(context: Context) {
                 Result.success(response.body()!!.user)
             } else {
                 Result.failure(Exception("Error al obtener el perfil"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Sin conexión. Verifica tu internet."))
+        }
+    }
+
+    suspend fun updateProfile(
+        nombreCompleto: String?,
+        telefono: String?,
+        fotoPerfil: String?,
+        ruc: String?
+    ): Result<UsuarioDto> {
+        return try {
+            val token = sessionManager.authToken ?: return Result.failure(Exception("No autenticado"))
+            val request = UpdateProfileRequest(nombreCompleto, telefono, fotoPerfil, ruc)
+            val response = api.updateProfile(RetrofitClient.bearerToken(token), request)
+            if (response.isSuccessful) {
+                Result.success(response.body()!!.user)
+            } else {
+                Result.failure(Exception("Error al actualizar perfil"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Sin conexión. Verifica tu internet."))
+        }
+    }
+
+    suspend fun updatePassword(currentPass: String, newPass: String): Result<Unit> {
+        return try {
+            val token = sessionManager.authToken ?: return Result.failure(Exception("No autenticado"))
+            val request = UpdatePasswordRequest(currentPass, newPass)
+            val response = api.updatePassword(RetrofitClient.bearerToken(token), request)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                val msg = if (response.code() == 401) "Contraseña actual incorrecta" else "Error al actualizar contraseña"
+                Result.failure(Exception(msg))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Sin conexión. Verifica tu internet."))
+        }
+    }
+
+    suspend fun deleteAccount(password: String): Result<Unit> {
+        return try {
+            val token = sessionManager.authToken ?: return Result.failure(Exception("No autenticado"))
+            val request = DeleteAccountRequest(password)
+            val response = api.deleteAccount(RetrofitClient.bearerToken(token), request)
+            if (response.isSuccessful) {
+                sessionManager.clearSession()
+                Result.success(Unit)
+            } else {
+                val msg = if (response.code() == 401) "Contraseña incorrecta" else "Error al eliminar cuenta"
+                Result.failure(Exception(msg))
             }
         } catch (e: Exception) {
             Result.failure(Exception("Sin conexión. Verifica tu internet."))

@@ -26,6 +26,23 @@ data class AuthResponse(
     @SerializedName("user") val user: UsuarioDto
 )
 
+data class UpdateProfileRequest(
+    @SerializedName("nombreCompleto") val nombreCompleto: String?,
+    @SerializedName("telefono") val telefono: String?,
+    @SerializedName("fotoPerfil") val fotoPerfil: String?,
+    @SerializedName("ruc") val ruc: String?
+)
+
+data class UpdatePasswordRequest(
+    @SerializedName("currentPassword") val currentPassword: String,
+    @SerializedName("newPassword") val newPassword: String
+)
+
+data class DeleteAccountRequest(
+    @SerializedName("password") val password: String
+)
+
+
 // ─── Usuario ───────────────────────────────────────────────
 
 data class UsuarioDto(
@@ -102,7 +119,8 @@ data class ResenaDto(
     @SerializedName("comentario") val comentario: String?,
     @SerializedName("respuestaDuenio") val respuestaDuenio: String?,
     @SerializedName("fecha") val fecha: String,
-    @SerializedName("usuario") val usuario: AutorDto?
+    @SerializedName("usuario") val usuario: AutorDto?,
+    @SerializedName("negocio") val negocio: NegocioSimpleDto? = null
 )
 
 data class ResenaSimpleDto(

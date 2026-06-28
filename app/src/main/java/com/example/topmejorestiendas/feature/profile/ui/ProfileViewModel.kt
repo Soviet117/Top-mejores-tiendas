@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.topmejorestiendas.core.domain.model.User
-import com.example.topmejorestiendas.database.AppDatabase
+import com.example.topmejorestiendas.data.repository.AuthRepository
 import com.example.topmejorestiendas.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +23,7 @@ sealed class ProfileUiState {
 
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val db = AppDatabase.getInstance(application)
+    private val authRepository = AuthRepository(application)
     private val sessionManager = SessionManager(application)
 
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
@@ -34,26 +34,28 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun loadUserProfile() {
-        val userId = sessionManager.userId
-        if (userId != -1) {
+        if (sessionManager.userId != -1) {
             viewModelScope.launch(Dispatchers.IO) {
-                val usuarioEntity = db.usuarioDao().obtenerPorId(userId)
+                val result = authRepository.getProfile()
                 withContext(Dispatchers.Main) {
-                    if (usuarioEntity != null) {
-                        _uiState.value = ProfileUiState.Success(
-                            User(
-                                id = usuarioEntity.id,
-                                fullName = usuarioEntity.nombreCompleto ?: "",
-                                email = usuarioEntity.email ?: "",
-                                phone = usuarioEntity.telefono ?: "",
-                                profilePhotoUrl = usuarioEntity.fotoPerfil ?: "",
-                                isOwner = usuarioEntity.esDuenio,
-                                ruc = usuarioEntity.ruc
+                    result.fold(
+                        onSuccess = { usuarioDto ->
+                            _uiState.value = ProfileUiState.Success(
+                                User(
+                                    id = usuarioDto.id,
+                                    fullName = usuarioDto.nombreCompleto,
+                                    email = usuarioDto.email,
+                                    phone = usuarioDto.telefono ?: "",
+                                    profilePhotoUrl = usuarioDto.fotoPerfil ?: "",
+                                    isOwner = usuarioDto.esDuenio,
+                                    ruc = usuarioDto.ruc
+                                )
                             )
-                        )
-                    } else {
-                        _uiState.value = ProfileUiState.Error("Usuario no encontrado en la base de datos.")
-                    }
+                        },
+                        onFailure = {
+                            _uiState.value = ProfileUiState.Error(it.message ?: "Usuario no encontrado.")
+                        }
+                    )
                 }
             }
         } else {
@@ -69,29 +71,30 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         _uiState.value = ProfileUiState.Loading
         
         viewModelScope.launch(Dispatchers.IO) {
-            val usuarioEntity = db.usuarioDao().obtenerPorId(currentUser.id)
-            if (usuarioEntity != null) {
-                usuarioEntity.nombreCompleto = fullName
-                usuarioEntity.telefono = phone
-                usuarioEntity.fotoPerfil = photoUrl
-                usuarioEntity.ruc = ruc
-                db.usuarioDao().actualizar(usuarioEntity)
-                
-                withContext(Dispatchers.Main) {
-                    _uiState.value = ProfileUiState.Success(
-                        currentUser.copy(
-                            fullName = fullName,
-                            phone = phone,
-                            profilePhotoUrl = photoUrl,
-                            ruc = ruc
+            val result = authRepository.updateProfile(
+                nombreCompleto = fullName.ifBlank { null },
+                telefono = phone.ifBlank { null },
+                fotoPerfil = photoUrl.ifBlank { null },
+                ruc = ruc.ifBlank { null }
+            )
+            
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = { usuarioDto ->
+                        _uiState.value = ProfileUiState.Success(
+                            currentUser.copy(
+                                fullName = usuarioDto.nombreCompleto,
+                                phone = usuarioDto.telefono ?: "",
+                                profilePhotoUrl = usuarioDto.fotoPerfil ?: "",
+                                ruc = usuarioDto.ruc
+                            )
                         )
-                    )
-                    onComplete()
-                }
-            } else {
-                withContext(Dispatchers.Main) {
-                    _uiState.value = ProfileUiState.Error("No se pudo actualizar el perfil.")
-                }
+                        onComplete()
+                    },
+                    onFailure = {
+                        _uiState.value = ProfileUiState.Error(it.message ?: "No se pudo actualizar el perfil.")
+                    }
+                )
             }
         }
     }
@@ -99,20 +102,14 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     fun updatePassword(currentPass: String, newPass: String, onResult: (Boolean, String) -> Unit) {
         val currentState = _uiState.value
         if (currentState !is ProfileUiState.Success) return
-        val currentUser = currentState.user
 
         viewModelScope.launch(Dispatchers.IO) {
-            val usuarioEntity = db.usuarioDao().obtenerPorId(currentUser.id)
-            if (usuarioEntity != null) {
-                if (usuarioEntity.contrasena == currentPass) {
-                    usuarioEntity.contrasena = newPass
-                    db.usuarioDao().actualizar(usuarioEntity)
-                    withContext(Dispatchers.Main) { onResult(true, "Contraseña actualizada con éxito.") }
-                } else {
-                    withContext(Dispatchers.Main) { onResult(false, "La contraseña actual es incorrecta.") }
-                }
-            } else {
-                withContext(Dispatchers.Main) { onResult(false, "Usuario no encontrado.") }
+            val result = authRepository.updatePassword(currentPass, newPass)
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = { onResult(true, "Contraseña actualizada con éxito.") },
+                    onFailure = { onResult(false, it.message ?: "Error al actualizar contraseña.") }
+                )
             }
         }
     }
@@ -120,30 +117,20 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     fun deleteAccount(password: String, onResult: (Boolean, String) -> Unit) {
         val currentState = _uiState.value
         if (currentState !is ProfileUiState.Success) return
-        val currentUser = currentState.user
 
         viewModelScope.launch(Dispatchers.IO) {
-            val usuarioEntity = db.usuarioDao().obtenerPorId(currentUser.id)
-            if (usuarioEntity != null) {
-                if (usuarioEntity.contrasena == password) {
-                    // Eliminación en cascada
-                    db.negocioDao().eliminarPorDuenio(currentUser.id)
-                    db.usuarioDao().eliminarPorId(currentUser.id)
-                    withContext(Dispatchers.Main) { 
-                        sessionManager.logout()
-                        onResult(true, "Cuenta eliminada permanentemente.") 
-                    }
-                } else {
-                    withContext(Dispatchers.Main) { onResult(false, "Contraseña incorrecta.") }
-                }
-            } else {
-                withContext(Dispatchers.Main) { onResult(false, "Usuario no encontrado.") }
+            val result = authRepository.deleteAccount(password)
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = { onResult(true, "Cuenta eliminada permanentemente.") },
+                    onFailure = { onResult(false, it.message ?: "Error al eliminar la cuenta.") }
+                )
             }
         }
     }
 
     fun logout() {
-        sessionManager.logout()
+        authRepository.logout()
         _uiState.value = ProfileUiState.Loading
     }
 }

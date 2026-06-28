@@ -26,6 +26,24 @@ interface ApiService {
     @GET("api/auth/me")
     suspend fun getMe(@Header("Authorization") token: String): Response<MeResponse>
 
+    @PUT("api/auth/profile")
+    suspend fun updateProfile(
+        @Header("Authorization") token: String,
+        @Body request: UpdateProfileRequest
+    ): Response<MeResponse>
+
+    @PUT("api/auth/password")
+    suspend fun updatePassword(
+        @Header("Authorization") token: String,
+        @Body request: UpdatePasswordRequest
+    ): Response<MessageResponse>
+
+    @HTTP(method = "DELETE", path = "api/auth/account", hasBody = true)
+    suspend fun deleteAccount(
+        @Header("Authorization") token: String,
+        @Body request: DeleteAccountRequest
+    ): Response<MessageResponse>
+
     // ─── NEGOCIOS ──────────────────────────────────────────────
     @GET("api/negocios")
     suspend fun getNegocios(
@@ -64,6 +82,11 @@ interface ApiService {
     @GET("api/resenas")
     suspend fun getResenas(
         @Query("negocioId") negocioId: Int? = null
+    ): Response<ResenasListResponse>
+
+    @GET("api/resenas/mias")
+    suspend fun getMisResenas(
+        @Header("Authorization") token: String
     ): Response<ResenasListResponse>
 
     @POST("api/resenas")

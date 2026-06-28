@@ -5,7 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.topmejorestiendas.database.AppDatabase
+import com.example.topmejorestiendas.data.repository.ResenaRepository
 import com.example.topmejorestiendas.model.Resena
 import com.example.topmejorestiendas.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
@@ -27,9 +27,7 @@ data class ReviewHistoryUiState(
 )
 
 class ReviewHistoryViewModel(application: Application) : AndroidViewModel(application) {
-    private val db = AppDatabase.getInstance(application)
-    private val resenaDao = db.resenaDao()
-    private val negocioDao = db.negocioDao()
+    private val resenaRepository = ResenaRepository(application)
     private val sessionManager = SessionManager(application)
 
     private val _uiState = MutableStateFlow(ReviewHistoryUiState())
@@ -47,28 +45,42 @@ class ReviewHistoryViewModel(application: Application) : AndroidViewModel(applic
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val reviews = resenaDao.obtenerPorUsuario(userId)
-                val reviewsWithBusiness = reviews.map { review ->
-                    val negocio = negocioDao.obtenerPorId(review.idNegocio)
-                    ReviewWithBusiness(
-                        review = review,
-                        businessName = negocio?.nombreNegocio ?: "Negocio eliminado"
-                    )
-                }
-                withContext(Dispatchers.Main) {
-                    _uiState.value = ReviewHistoryUiState(
-                        isLoading = false,
-                        reviews = reviewsWithBusiness
-                    )
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _uiState.value = ReviewHistoryUiState(
-                        isLoading = false,
-                        error = "Error al cargar historial"
-                    )
-                }
+            val result = resenaRepository.getMisResenas()
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = { dtoReviews ->
+                        val reviewsWithBusiness = dtoReviews.map { dto ->
+                            val localReview = Resena(
+                                dto.idUsuario,
+                                dto.idNegocio,
+                                dto.calificacion,
+                                dto.calidadAtencion,
+                                dto.calidadProductos,
+                                dto.costos,
+                                dto.comentario,
+                                0L
+                            ).apply {
+                                id = dto.id
+                                respuestaDuenio = dto.respuestaDuenio
+                            }
+
+                            ReviewWithBusiness(
+                                review = localReview,
+                                businessName = dto.negocio?.nombreNegocio ?: "Local eliminado"
+                            )
+                        }
+                        _uiState.value = ReviewHistoryUiState(
+                            isLoading = false,
+                            reviews = reviewsWithBusiness
+                        )
+                    },
+                    onFailure = {
+                        _uiState.value = ReviewHistoryUiState(
+                            isLoading = false,
+                            error = it.message ?: "Error al cargar historial"
+                        )
+                    }
+                )
             }
         }
     }

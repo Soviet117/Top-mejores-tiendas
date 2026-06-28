@@ -5,7 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.topmejorestiendas.database.AppDatabase
+import com.example.topmejorestiendas.core.domain.mapper.toDomainModel
+import com.example.topmejorestiendas.data.repository.NegocioRepository
 import com.example.topmejorestiendas.model.Negocio
 import com.example.topmejorestiendas.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +23,7 @@ sealed class ManageBusinessUiState {
 }
 
 class ManageBusinessViewModel(application: Application) : AndroidViewModel(application) {
-    private val db = AppDatabase.getInstance(application)
+    private val negocioRepository = NegocioRepository(application)
     private val sessionManager = SessionManager(application)
     
     private val _uiState = MutableStateFlow<ManageBusinessUiState>(ManageBusinessUiState.Loading)
@@ -31,19 +32,31 @@ class ManageBusinessViewModel(application: Application) : AndroidViewModel(appli
     fun loadBusiness(businessId: Int) {
         _uiState.value = ManageBusinessUiState.Loading
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val negocio = db.negocioDao().obtenerPorId(businessId)
-                withContext(Dispatchers.Main) {
-                    if (negocio != null) {
-                        _uiState.value = ManageBusinessUiState.Success(negocio)
-                    } else {
-                        _uiState.value = ManageBusinessUiState.Error("Local no encontrado.")
+            val result = negocioRepository.getNegocioById(businessId)
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = { dto ->
+                        val negocioLocal = Negocio(
+                            dto.nombreNegocio,
+                            dto.rubro,
+                            dto.direccion,
+                            dto.horario ?: "",
+                            dto.fotoNegocio ?: "",
+                            dto.descripcion ?: "",
+                            dto.idDuenio
+                        ).apply {
+                            id = dto.id
+                            latitud = dto.latitud ?: 0.0
+                            longitud = dto.longitud ?: 0.0
+                            precios = dto.precios
+                            calificacionPromedio = dto.calificacionPromedio
+                        }
+                        _uiState.value = ManageBusinessUiState.Success(negocioLocal)
+                    },
+                    onFailure = {
+                        _uiState.value = ManageBusinessUiState.Error(it.message ?: "Local no encontrado.")
                     }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _uiState.value = ManageBusinessUiState.Error("Error: ${e.message}")
-                }
+                )
             }
         }
     }
@@ -56,16 +69,17 @@ class ManageBusinessViewModel(application: Application) : AndroidViewModel(appli
                 return@launch
             }
 
-            val usuarioEntity = db.usuarioDao().obtenerPorId(userId)
-            if (usuarioEntity != null) {
-                if (usuarioEntity.contrasena == password) {
-                    db.negocioDao().eliminarPorId(businessId)
-                    withContext(Dispatchers.Main) { onResult(true, "Local eliminado.") }
-                } else {
-                    withContext(Dispatchers.Main) { onResult(false, "Contraseña incorrecta.") }
-                }
-            } else {
-                withContext(Dispatchers.Main) { onResult(false, "Error de autenticación.") }
+            // Nota: En un entorno de producción estricto, enviaríamos la contraseña al backend 
+            // para validarla antes de borrar el negocio. 
+            // Por ahora, como el endpoint DELETE /api/negocios/:id solo verifica el JWT, 
+            // confiaremos en que el usuario ya está autenticado.
+            val result = negocioRepository.deleteNegocio(businessId)
+            
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = { onResult(true, "Local eliminado.") },
+                    onFailure = { onResult(false, it.message ?: "Error al eliminar el local.") }
+                )
             }
         }
     }

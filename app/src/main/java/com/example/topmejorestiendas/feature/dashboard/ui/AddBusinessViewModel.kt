@@ -5,8 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.topmejorestiendas.database.AppDatabase
-import com.example.topmejorestiendas.model.Negocio
+import com.example.topmejorestiendas.data.remote.dto.CreateNegocioRequest
+import com.example.topmejorestiendas.data.repository.NegocioRepository
 import com.example.topmejorestiendas.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +22,7 @@ data class AddBusinessState(
 )
 
 class AddBusinessViewModel(application: Application) : AndroidViewModel(application) {
-    private val db = AppDatabase.getInstance(application)
+    private val negocioRepository = NegocioRepository(application)
     private val sessionManager = SessionManager(application)
     
     private val _uiState = MutableStateFlow(AddBusinessState())
@@ -53,33 +53,29 @@ class AddBusinessViewModel(application: Application) : AndroidViewModel(applicat
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val newBusiness = Negocio(
-                    name,
-                    category,
-                    address,
-                    schedule,
-                    photoUri,
-                    description,
-                    ownerId
-                )
-                newBusiness.latitud = latitude
-                newBusiness.longitud = longitude
-                newBusiness.precios = prices.ifBlank { null }
-                
-                val result = db.negocioDao().insertar(newBusiness)
-                
-                withContext(Dispatchers.Main) {
-                    if (result > 0) {
+            val request = CreateNegocioRequest(
+                nombreNegocio = name,
+                rubro = category,
+                direccion = address,
+                horario = schedule.ifBlank { null },
+                latitud = latitude.takeIf { it != 0.0 },
+                longitud = longitude.takeIf { it != 0.0 },
+                descripcion = description.ifBlank { null },
+                precios = prices.ifBlank { null },
+                fotoNegocioBase64 = photoUri.ifBlank { null } // Idealmente subir a Cloudinary y enviar la URL
+            )
+            
+            val result = negocioRepository.createNegocio(request)
+            
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = {
                         _uiState.value = _uiState.value.copy(isLoading = false, isSuccess = true)
-                    } else {
-                        _uiState.value = _uiState.value.copy(isLoading = false, error = "Error al guardar el local en la base de datos.")
+                    },
+                    onFailure = {
+                        _uiState.value = _uiState.value.copy(isLoading = false, error = it.message ?: "Error al guardar el local")
                     }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _uiState.value = _uiState.value.copy(isLoading = false, error = "Error inesperado: ${e.message}")
-                }
+                )
             }
         }
     }

@@ -5,7 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.topmejorestiendas.database.AppDatabase
+import com.example.topmejorestiendas.data.repository.ResenaRepository
 import com.example.topmejorestiendas.model.Resena
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +21,7 @@ data class BusinessReviewsUiState(
 )
 
 class BusinessReviewsViewModel(application: Application) : AndroidViewModel(application) {
-    private val db = AppDatabase.getInstance(application)
+    private val resenaRepository = ResenaRepository(application)
     
     private val _uiState = MutableStateFlow(BusinessReviewsUiState())
     val uiState: StateFlow<BusinessReviewsUiState> = _uiState.asStateFlow()
@@ -29,15 +29,31 @@ class BusinessReviewsViewModel(application: Application) : AndroidViewModel(appl
     fun loadReviews(businessId: Int) {
         _uiState.value = _uiState.value.copy(isLoading = true, error = null)
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val resenas = db.resenaDao().obtenerPorNegocio(businessId)
-                withContext(Dispatchers.Main) {
-                    _uiState.value = _uiState.value.copy(isLoading = false, reviews = resenas)
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
-                }
+            val result = resenaRepository.getResenas(businessId)
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = { dtoReviews ->
+                        val localReviews = dtoReviews.map { dto ->
+                            Resena(
+                                dto.idUsuario,
+                                dto.idNegocio,
+                                dto.calificacion,
+                                dto.calidadAtencion,
+                                dto.calidadProductos,
+                                dto.costos,
+                                dto.comentario,
+                                0L // Podríamos parsear la fecha si se necesitara
+                            ).apply {
+                                id = dto.id
+                                respuestaDuenio = dto.respuestaDuenio
+                            }
+                        }
+                        _uiState.value = _uiState.value.copy(isLoading = false, reviews = localReviews)
+                    },
+                    onFailure = {
+                        _uiState.value = _uiState.value.copy(isLoading = false, error = it.message)
+                    }
+                )
             }
         }
     }
@@ -46,24 +62,13 @@ class BusinessReviewsViewModel(application: Application) : AndroidViewModel(appl
         if (responseText.isBlank()) return
         
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                // Modificar el campo recién añadido en la BD
-                review.respuestaDuenio = responseText
-                // Nota: ResenaDao no tiene método actualizar. Usaremos un query custom o insert si room lo soporta, 
-                // Pero como es un RoomDao sin @Update, deberíamos usar una forma de actualizar.
-                // Sin embargo, si ResenaDao no tiene @Update, necesitamos agregarlo a ResenaDao.java
-                // Para simplificar, lo haremos como paso extra (modificar ResenaDao.java)
-                
-                db.resenaDao().actualizar(review)
-                
-                // Recargar reseñas
-                val resenas = db.resenaDao().obtenerPorNegocio(review.idNegocio)
-                withContext(Dispatchers.Main) {
-                    _uiState.value = _uiState.value.copy(reviews = resenas)
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _uiState.value = _uiState.value.copy(error = "Error al guardar respuesta: ${e.message}")
+            val result = resenaRepository.responderResena(review.id, responseText)
+            
+            withContext(Dispatchers.Main) {
+                if (result.isSuccess) {
+                    loadReviews(review.idNegocio)
+                } else {
+                    _uiState.value = _uiState.value.copy(error = "Error al guardar respuesta: ${result.exceptionOrNull()?.message}")
                 }
             }
         }

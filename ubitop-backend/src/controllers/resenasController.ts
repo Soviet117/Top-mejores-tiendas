@@ -57,6 +57,26 @@ export const getResenas = async (req: AuthenticatedRequest, res: Response): Prom
   }
 };
 
+// ─── GET /api/resenas/mias ──────────────────────────────────
+export const getMisResenas = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const resenas = await prisma.resena.findMany({
+      where: { idUsuario: req.user!.id },
+      include: {
+        negocio: {
+          select: { id: true, nombreNegocio: true, rubro: true, fotoNegocio: true },
+        },
+      },
+      orderBy: { fecha: 'desc' },
+    });
+
+    res.status(200).json({ resenas });
+  } catch (error) {
+    console.error('[RESENAS] getMisResenas error:', error);
+    res.status(500).json({ error: 'Error al obtener tus reseñas' });
+  }
+};
+
 // ─── POST /api/resenas ───────────────────────────────────────
 export const createResena = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {

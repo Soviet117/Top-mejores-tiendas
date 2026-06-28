@@ -25,6 +25,19 @@ class ResenaRepository(context: Context) {
         }
     }
 
+    suspend fun getMisResenas(): Result<List<ResenaDto>> {
+        return try {
+            val response = api.getMisResenas(token)
+            if (response.isSuccessful) {
+                Result.success(response.body()!!.resenas)
+            } else {
+                Result.failure(Exception("Error al obtener tus reseñas (${response.code()})"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Sin conexión. Verifica tu internet."))
+        }
+    }
+
     suspend fun createResena(request: CreateResenaRequest): Result<Unit> {
         return try {
             val response = api.createResena(token, request)

@@ -5,7 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.topmejorestiendas.database.AppDatabase
+import com.example.topmejorestiendas.data.repository.ReservaRepository
+import com.example.topmejorestiendas.model.Reserva
 import com.example.topmejorestiendas.model.ReservaConDetalle
 import com.example.topmejorestiendas.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
@@ -17,11 +18,12 @@ import kotlinx.coroutines.withContext
 
 data class ClientReservationsState(
     val isLoading: Boolean = true,
-    val reservations: List<ReservaConDetalle> = emptyList()
+    val reservations: List<ReservaConDetalle> = emptyList(),
+    val error: String? = null
 )
 
 class ClientReservationsViewModel(application: Application) : AndroidViewModel(application) {
-    private val db = AppDatabase.getInstance(application)
+    private val reservaRepository = ReservaRepository(application)
     private val sessionManager = SessionManager(application)
     
     private val _uiState = MutableStateFlow(ClientReservationsState())
@@ -34,18 +36,43 @@ class ClientReservationsViewModel(application: Application) : AndroidViewModel(a
     private fun loadReservations() {
         val userId = sessionManager.userId
         if (userId != -1) {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             viewModelScope.launch(Dispatchers.IO) {
-                val reservas = db.reservaDao().getReservasPorUsuario(userId)
+                val result = reservaRepository.getReservasCliente()
                 withContext(Dispatchers.Main) {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        reservations = reservas
+                    result.fold(
+                        onSuccess = { dtoReservas ->
+                            val reservasConDetalle = dtoReservas.map { dto ->
+                            val localReserva = Reserva(
+                                dto.idNegocio,
+                                dto.idUsuario,
+                                dto.fecha,
+                                dto.horaInicio,
+                                dto.horaFin,
+                                dto.estado,
+                                0L // or parse if needed
+                            ).apply { id = dto.id }
+                            
+                            ReservaConDetalle().apply {
+                                this.reserva = localReserva
+                                this.nombreCliente = dto.usuario?.nombreCompleto ?: "Tú"
+                                this.telefonoCliente = dto.usuario?.telefono
+                                this.nombreNegocio = dto.negocio?.nombreNegocio ?: "Local Desconocido"
+                            }
+                            }
+                            _uiState.value = _uiState.value.copy(
+                                isLoading = false,
+                                reservations = reservasConDetalle
+                            )
+                        },
+                        onFailure = {
+                            _uiState.value = _uiState.value.copy(isLoading = false, error = it.message)
+                        }
                     )
                 }
             }
         } else {
-            _uiState.value = _uiState.value.copy(isLoading = false)
+            _uiState.value = _uiState.value.copy(isLoading = false, error = "Sesión inválida")
         }
     }
 }

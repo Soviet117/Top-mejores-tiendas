@@ -173,3 +173,76 @@ export const getMe = async (req: Request & { user?: { id: number } }, res: Respo
     res.status(500).json({ error: 'Error al obtener el perfil' });
   }
 };
+
+// ─── PUT /api/auth/profile ──────────────────────────────────
+export const updateProfile = async (req: Request & { user?: { id: number } }, res: Response): Promise<void> => {
+  try {
+    const { nombreCompleto, telefono, fotoPerfil, ruc } = req.body;
+
+    const user = await prisma.usuario.update({
+      where: { id: req.user!.id },
+      data: {
+        ...(nombreCompleto && { nombreCompleto }),
+        ...(telefono !== undefined && { telefono }),
+        ...(fotoPerfil !== undefined && { fotoPerfil }),
+        ...(ruc !== undefined && { ruc }),
+      },
+      select: {
+        id: true, nombreCompleto: true, email: true, telefono: true,
+        fotoPerfil: true, esDuenio: true, ruc: true, razonSocial: true, emailVerificado: true,
+      },
+    });
+
+    res.status(200).json({ message: 'Perfil actualizado', user });
+  } catch (error) {
+    console.error('[AUTH] updateProfile error:', error);
+    res.status(500).json({ error: 'Error al actualizar el perfil' });
+  }
+};
+
+// ─── PUT /api/auth/password ─────────────────────────────────
+export const updatePassword = async (req: Request & { user?: { id: number } }, res: Response): Promise<void> => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({ error: 'Se requiere contraseña actual y nueva' });
+      return;
+    }
+
+    const user = await prisma.usuario.findUnique({ where: { id: req.user!.id } });
+    if (!user) { res.status(404).json({ error: 'Usuario no encontrado' }); return; }
+
+    const valid = await bcrypt.compare(currentPassword, user.contrasena);
+    if (!valid) { res.status(401).json({ error: 'Contraseña actual incorrecta' }); return; }
+
+    const hashed = await bcrypt.hash(newPassword, 12);
+    await prisma.usuario.update({ where: { id: user.id }, data: { contrasena: hashed } });
+
+    res.status(200).json({ message: 'Contraseña actualizada' });
+  } catch (error) {
+    console.error('[AUTH] updatePassword error:', error);
+    res.status(500).json({ error: 'Error al cambiar la contraseña' });
+  }
+};
+
+// ─── DELETE /api/auth/account ───────────────────────────────
+export const deleteAccount = async (req: Request & { user?: { id: number } }, res: Response): Promise<void> => {
+  try {
+    const { password } = req.body;
+    if (!password) { res.status(400).json({ error: 'Se requiere la contraseña' }); return; }
+
+    const user = await prisma.usuario.findUnique({ where: { id: req.user!.id } });
+    if (!user) { res.status(404).json({ error: 'Usuario no encontrado' }); return; }
+
+    const valid = await bcrypt.compare(password, user.contrasena);
+    if (!valid) { res.status(401).json({ error: 'Contraseña incorrecta' }); return; }
+
+    // Cascada automática por las FK ON DELETE CASCADE
+    await prisma.usuario.delete({ where: { id: user.id } });
+
+    res.status(200).json({ message: 'Cuenta eliminada permanentemente' });
+  } catch (error) {
+    console.error('[AUTH] deleteAccount error:', error);
+    res.status(500).json({ error: 'Error al eliminar la cuenta' });
+  }
+};

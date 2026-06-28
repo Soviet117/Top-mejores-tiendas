@@ -5,7 +5,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.topmejorestiendas.database.AppDatabase
+import com.example.topmejorestiendas.core.domain.mapper.toDomainModel
+import com.example.topmejorestiendas.data.remote.dto.CreateNegocioRequest
+import com.example.topmejorestiendas.data.repository.NegocioRepository
 import com.example.topmejorestiendas.model.Negocio
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +24,7 @@ sealed class EditBusinessUiState {
 }
 
 class EditBusinessViewModel(application: Application) : AndroidViewModel(application) {
-    private val db = AppDatabase.getInstance(application)
+    private val negocioRepository = NegocioRepository(application)
     
     private val _uiState = MutableStateFlow<EditBusinessUiState>(EditBusinessUiState.Loading)
     val uiState: StateFlow<EditBusinessUiState> = _uiState.asStateFlow()
@@ -30,19 +32,31 @@ class EditBusinessViewModel(application: Application) : AndroidViewModel(applica
     fun loadBusiness(businessId: Int) {
         _uiState.value = EditBusinessUiState.Loading
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val negocio = db.negocioDao().obtenerPorId(businessId)
-                withContext(Dispatchers.Main) {
-                    if (negocio != null) {
-                        _uiState.value = EditBusinessUiState.Loaded(negocio)
-                    } else {
-                        _uiState.value = EditBusinessUiState.Error("Local no encontrado.")
+            val result = negocioRepository.getNegocioById(businessId)
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = { dto ->
+                        val negocioLocal = Negocio(
+                            dto.nombreNegocio,
+                            dto.rubro,
+                            dto.direccion,
+                            dto.horario ?: "",
+                            dto.fotoNegocio ?: "",
+                            dto.descripcion ?: "",
+                            dto.idDuenio
+                        ).apply {
+                            id = dto.id
+                            latitud = dto.latitud ?: 0.0
+                            longitud = dto.longitud ?: 0.0
+                            precios = dto.precios
+                            calificacionPromedio = dto.calificacionPromedio
+                        }
+                        _uiState.value = EditBusinessUiState.Loaded(negocioLocal)
+                    },
+                    onFailure = {
+                        _uiState.value = EditBusinessUiState.Error(it.message ?: "Error al cargar el local")
                     }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _uiState.value = EditBusinessUiState.Error("Error: ${e.message}")
-                }
+                )
             }
         }
     }
@@ -65,29 +79,29 @@ class EditBusinessViewModel(application: Application) : AndroidViewModel(applica
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val negocio = db.negocioDao().obtenerPorId(businessId)
-                if (negocio != null) {
-                    negocio.nombreNegocio = name
-                    negocio.rubro = category
-                    negocio.direccion = address
-                    negocio.horario = schedule
-                    negocio.descripcion = description
-                    negocio.fotoNegocio = photoUri
-                    negocio.latitud = latitude
-                    negocio.longitud = longitude
-                    negocio.precios = prices.ifBlank { null }
-                    
-                    db.negocioDao().actualizar(negocio)
-                    
-                    withContext(Dispatchers.Main) {
+            val request = CreateNegocioRequest(
+                nombreNegocio = name,
+                rubro = category,
+                direccion = address,
+                horario = schedule.ifBlank { null },
+                latitud = latitude.takeIf { it != 0.0 },
+                longitud = longitude.takeIf { it != 0.0 },
+                descripcion = description.ifBlank { null },
+                precios = prices.ifBlank { null },
+                fotoNegocioBase64 = photoUri.ifBlank { null }
+            )
+            
+            val result = negocioRepository.updateNegocio(businessId, request)
+            
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = {
                         _uiState.value = EditBusinessUiState.Success
+                    },
+                    onFailure = {
+                        _uiState.value = EditBusinessUiState.Error(it.message ?: "Error al actualizar")
                     }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _uiState.value = EditBusinessUiState.Error("Error al actualizar: ${e.message}")
-                }
+                )
             }
         }
     }
