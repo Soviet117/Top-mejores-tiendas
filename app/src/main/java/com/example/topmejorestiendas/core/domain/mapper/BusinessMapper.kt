@@ -44,3 +44,40 @@ fun Negocio.toDomainModel(reviews: List<Resena> = emptyList()): Business {
         prices = this.precios ?: ""
     )
 }
+
+fun com.example.topmejorestiendas.data.remote.dto.NegocioDto.toDomainModel(): Business {
+    val currentHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+    val isMockOpen = currentHour in 8..22
+    val isMockVerified = !this.fotoNegocio.isNullOrBlank()
+
+    var avgAtencion = 0.0
+    var avgProducto = 0.0
+    var avgCosto = 0.0
+
+    this.resenas?.let { reviewsList ->
+        if (reviewsList.isNotEmpty()) {
+            avgAtencion = reviewsList.map { it.calidadAtencion }.average()
+            avgProducto = reviewsList.map { it.calidadProductos }.average()
+            avgCosto = reviewsList.map { it.costos }.average()
+        }
+    }
+
+    return Business(
+        id = this.id.toString(),
+        name = this.nombreNegocio,
+        description = this.descripcion ?: "",
+        imageUrl = this.fotoNegocio ?: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=600&auto=format&fit=crop",
+        rating = this.calificacionPromedio.toDouble(),
+        reviewCount = this.resenas?.size ?: 0,
+        category = this.rubro,
+        isVerified = isMockVerified,
+        isOpen = isMockOpen,
+        distanceText = "A ${String.format("%.1f", Math.random() * 5 + 0.1)} km de ti",
+        ratingAtencion = avgAtencion,
+        ratingProducto = avgProducto,
+        ratingCosto = avgCosto,
+        latitude = this.latitud ?: 0.0,
+        longitude = this.longitud ?: 0.0,
+        prices = this.precios ?: ""
+    )
+}

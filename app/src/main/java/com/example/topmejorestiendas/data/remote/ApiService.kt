@@ -1,18 +1,24 @@
 package com.example.topmejorestiendas.data.remote
 
 import com.example.topmejorestiendas.data.remote.dto.*
+import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.*
 
 /**
  * Interfaz Retrofit que mapea todos los endpoints del backend UbiTop.
- * Cada función suspende para ser llamada desde coroutines.
+ * Las funciones suspend son para Kotlin/coroutines.
+ * Las funciones Call<> son para interop con Java.
  */
 interface ApiService {
 
     // ─── AUTH ──────────────────────────────────────────────────
     @POST("api/auth/register")
     suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>
+
+    /** Versión Call<> para uso desde Java (RegistroUsuarioActivity) */
+    @POST("api/auth/register")
+    fun registerCall(@Body request: RegisterRequest): Call<AuthResponse>
 
     @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): Response<AuthResponse>

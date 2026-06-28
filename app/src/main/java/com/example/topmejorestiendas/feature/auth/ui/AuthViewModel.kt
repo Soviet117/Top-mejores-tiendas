@@ -10,14 +10,12 @@ import com.example.topmejorestiendas.core.network.EmailService
 import com.example.topmejorestiendas.core.network.EmailVerificationState
 import com.example.topmejorestiendas.core.network.RucVerificationState
 import com.example.topmejorestiendas.core.network.SunatService
-import com.example.topmejorestiendas.database.AppDatabase
+import com.example.topmejorestiendas.data.repository.AuthRepository
 import com.example.topmejorestiendas.utils.SessionManager
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 data class AuthState(
     val isLoading: Boolean = false,
@@ -28,9 +26,10 @@ data class AuthState(
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val db = AppDatabase.getInstance(application)
+    // ─── Repositorios (backend API) — Room eliminado ─────────────────────
+    private val authRepository = AuthRepository(application)
     private val sessionManager = SessionManager(application)
-    
+
     private val _uiState = MutableStateFlow(AuthState())
     val uiState: StateFlow<AuthState> = _uiState.asStateFlow()
 
@@ -56,16 +55,14 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun checkSession() {
-        if (sessionManager.isLoggedIn) {
-            val userId = sessionManager.userId
-            if (userId != -1) {
-                _uiState.value = _uiState.value.copy(isLoggedIn = true)
-            }
+        // La sesión ahora se valida por presencia del token JWT
+        if (authRepository.isLoggedIn()) {
+            _uiState.value = _uiState.value.copy(isLoggedIn = true)
         }
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // LOGIN
+    // LOGIN → Ahora usa la API del backend
     // ═══════════════════════════════════════════════════════════════════════
 
     fun login(email: String, pass: String) {
@@ -76,42 +73,31 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
         _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val usuarioEntity = db.usuarioDao().login(email, pass)
-                withContext(Dispatchers.Main) {
-                    if (usuarioEntity != null) {
-                        sessionManager.createLoginSession(usuarioEntity.id)
-                        val domainUser = User(
-                            id = usuarioEntity.id,
-                            fullName = usuarioEntity.nombreCompleto ?: "",
-                            email = usuarioEntity.email ?: "",
-                            phone = usuarioEntity.telefono ?: "",
-                            profilePhotoUrl = usuarioEntity.fotoPerfil ?: "",
-                            isOwner = usuarioEntity.esDuenio,
-                            ruc = usuarioEntity.ruc,
-                            emailVerified = usuarioEntity.emailVerificado,
-                            razonSocial = usuarioEntity.razonSocial
-                        )
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            user = domainUser,
-                            isLoggedIn = true
-                        )
-                    } else {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            error = "Correo o contraseña incorrectos"
-                        )
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = "Error inesperado: ${e.message}"
-                    )
-                }
+        viewModelScope.launch {
+            val result = authRepository.login(email, pass)
+            result.onSuccess { response ->
+                val u = response.user
+                val domainUser = User(
+                    id = u.id,
+                    fullName = u.nombreCompleto,
+                    email = u.email,
+                    phone = u.telefono ?: "",
+                    profilePhotoUrl = u.fotoPerfil ?: "",
+                    isOwner = u.esDuenio,
+                    ruc = u.ruc,
+                    emailVerified = u.emailVerificado,
+                    razonSocial = u.razonSocial
+                )
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    user = domainUser,
+                    isLoggedIn = true
+                )
+            }.onFailure { error ->
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = error.message ?: "Credenciales incorrectas"
+                )
             }
         }
     }
@@ -136,15 +122,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // VERIFICACIÓN DE EMAIL (OTP)
+    // VERIFICACIÓN DE EMAIL (OTP) — Sin cambios, lógica en memoria
     // ═══════════════════════════════════════════════════════════════════════
 
-    /**
-     * Envía un código de verificación OTP al correo especificado.
-     * Valida el formato del email antes de enviar.
-     */
     fun sendVerificationEmail(email: String) {
-        // Validar formato de email
         if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             _emailVerificationState.value = EmailVerificationState.Error("Ingresa un correo electrónico válido")
             return
@@ -168,10 +149,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * Verifica el código OTP ingresado por el usuario.
-     * Si coincide con el código enviado, marca el email como verificado.
-     */
     fun verifyEmailCode(inputCode: String, email: String) {
         if (inputCode.isBlank()) {
             _emailVerificationState.value = EmailVerificationState.Error("Ingresa el código de verificación")
@@ -186,24 +163,17 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         if (inputCode.trim() == currentOtpCode) {
             verifiedEmail = email
             _emailVerificationState.value = EmailVerificationState.Verified
-            currentOtpCode = null // Invalidar código usado
+            currentOtpCode = null
         } else {
             _emailVerificationState.value = EmailVerificationState.Error("Código incorrecto. Intenta nuevamente.")
         }
     }
 
-    /**
-     * Verifica si el email proporcionado sigue siendo el verificado.
-     * Si el usuario cambia el email después de verificar, se invalida.
-     */
     fun isEmailVerified(currentEmail: String): Boolean {
         return _emailVerificationState.value is EmailVerificationState.Verified &&
                 verifiedEmail == currentEmail
     }
 
-    /**
-     * Resetea el estado de verificación de email (para cuando el usuario cambia el email).
-     */
     fun resetEmailVerification() {
         _emailVerificationState.value = EmailVerificationState.Idle
         currentOtpCode = null
@@ -211,15 +181,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // VERIFICACIÓN DE RUC (SUNAT)
+    // VERIFICACIÓN DE RUC (SUNAT) — Sin cambios
     // ═══════════════════════════════════════════════════════════════════════
 
-    /**
-     * Consulta un RUC en la base de datos de SUNAT.
-     * Valida el formato y verifica que el contribuyente esté ACTIVO y HABIDO.
-     */
     fun verifyRuc(ruc: String) {
-        // Validación de formato rápida
         if (ruc.length != 11) {
             _rucVerificationState.value = RucVerificationState.Idle
             verifiedRuc = null
@@ -265,24 +230,18 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * Verifica si el RUC proporcionado sigue siendo el verificado.
-     */
     fun isRucVerified(currentRuc: String): Boolean {
         return _rucVerificationState.value is RucVerificationState.Verified &&
                 verifiedRuc == currentRuc
     }
 
-    /**
-     * Resetea el estado de verificación de RUC.
-     */
     fun resetRucVerification() {
         _rucVerificationState.value = RucVerificationState.Idle
         verifiedRuc = null
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // REGISTRO
+    // REGISTRO → Ahora usa la API del backend
     // ═══════════════════════════════════════════════════════════════════════
 
     fun register(name: String, email: String, phone: String, pass: String, isOwner: Boolean, ruc: String) {
@@ -291,13 +250,11 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
-        // ── Verificar que el email fue validado ──
         if (!isEmailVerified(email)) {
             _uiState.value = _uiState.value.copy(error = "Debes verificar tu correo electrónico antes de registrarte")
             return
         }
 
-        // ── Si es dueño, verificar RUC SUNAT ──
         if (isOwner) {
             if (ruc.isBlank()) {
                 _uiState.value = _uiState.value.copy(error = "El RUC es obligatorio para dueños de negocio")
@@ -311,74 +268,45 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
         _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
-        // Obtener la razón social del RUC verificado
         val razonSocial = if (isOwner) {
             val rucState = _rucVerificationState.value
             if (rucState is RucVerificationState.Verified) rucState.response.razonSocial else null
         } else null
 
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                // Verificar si ya existe el usuario
-                val existingUser = db.usuarioDao().obtenerPorEmail(email)
-                if (existingUser != null) {
-                    withContext(Dispatchers.Main) {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            error = "El correo ya está registrado"
-                        )
-                    }
-                    return@launch
-                }
+        viewModelScope.launch {
+            val result = authRepository.register(
+                nombreCompleto = name,
+                email = email,
+                password = pass,
+                telefono = phone.ifBlank { null },
+                esDuenio = isOwner,
+                ruc = if (isOwner) ruc else null,
+                razonSocial = razonSocial
+            )
 
-                val newUser = com.example.topmejorestiendas.model.Usuario(
-                    name,
-                    email,
-                    pass,
-                    phone,
-                    "",
-                    isOwner,
-                    if (isOwner) ruc else null
+            result.onSuccess { response ->
+                val u = response.user
+                val domainUser = User(
+                    id = u.id,
+                    fullName = u.nombreCompleto,
+                    email = u.email,
+                    phone = u.telefono ?: "",
+                    profilePhotoUrl = u.fotoPerfil ?: "",
+                    isOwner = u.esDuenio,
+                    ruc = u.ruc,
+                    emailVerified = true,
+                    razonSocial = u.razonSocial
                 )
-                // Marcar email como verificado y guardar razón social
-                newUser.emailVerificado = true
-                newUser.razonSocial = razonSocial
-
-                val newId = db.usuarioDao().registrar(newUser)
-                
-                withContext(Dispatchers.Main) {
-                    if (newId > 0) {
-                        sessionManager.createLoginSession(newId.toInt())
-                        val domainUser = User(
-                            id = newId.toInt(),
-                            fullName = name,
-                            email = email,
-                            phone = phone,
-                            profilePhotoUrl = "",
-                            isOwner = isOwner,
-                            ruc = if (isOwner) ruc else null,
-                            emailVerified = true,
-                            razonSocial = razonSocial
-                        )
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            user = domainUser,
-                            isLoggedIn = true
-                        )
-                    } else {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            error = "No se pudo registrar el usuario"
-                        )
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = "Error inesperado: ${e.message}"
-                    )
-                }
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    user = domainUser,
+                    isLoggedIn = true
+                )
+            }.onFailure { error ->
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = error.message ?: "No se pudo registrar el usuario"
+                )
             }
         }
     }
@@ -392,8 +320,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun logout() {
-        sessionManager.logout()
-        // Resetear todos los estados de verificación
+        authRepository.logout()
         resetEmailVerification()
         resetRucVerification()
         _uiState.value = AuthState()

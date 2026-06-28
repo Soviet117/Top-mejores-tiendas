@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.topmejorestiendas.core.domain.mapper.toDomainModel
 import com.example.topmejorestiendas.core.domain.model.Business
-import com.example.topmejorestiendas.database.AppDatabase
+import com.example.topmejorestiendas.data.repository.NegocioRepository
 import com.example.topmejorestiendas.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,9 +27,7 @@ data class HomeUiState(
 )
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
-    private val db = AppDatabase.getInstance(application)
-    private val negocioDao = db.negocioDao()
-    private val resenaDao = db.resenaDao()
+    private val negocioRepository = NegocioRepository(application)
     private val sessionManager = SessionManager(application)
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -74,36 +72,46 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val category = _uiState.value.selectedCategory
-                val dbNegocios = if (category == "Todo" || category == "Ofertas") { // "Ofertas" no es un rubro real en la DB por ahora
-                    negocioDao.obtenerTop(100)
+                
+                // Mapear la categoría para la API
+                val apiCategory = if (category == "Todo" || category == "Ofertas") null else category
+                
+                // Obtener negocios desde el backend
+                val result = negocioRepository.getNegocios(rubro = apiCategory)
+
+                if (result.isSuccess) {
+                    val dtos = result.getOrNull() ?: emptyList()
+                    val favorites = sessionManager.favorites
+
+                    // Mapear al modelo de UI e inyectar favoritos
+                    val mappedBusinesses = dtos.map { dto ->
+                        val business = dto.toDomainModel()
+                        business.copy(isFavorite = favorites.contains(business.id))
+                    }.sortedByDescending { it.isFavorite }
+
+                    originalList = mappedBusinesses
+
+                    withContext(Dispatchers.Main) {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            businesses = originalList,
+                            error = null
+                        )
+                        applySortingAndFiltering() // Aplicar búsqueda de texto y ordenación
+                    }
                 } else {
-                    negocioDao.obtenerPorRubro(category)
-                }
-
-                val favorites = sessionManager.favorites
-
-                // Mapear al modelo de UI e inyectar favoritos
-                val mappedBusinesses = dbNegocios.map { negocio ->
-                    val reviews = resenaDao.obtenerPorNegocio(negocio.id)
-                    val business = negocio.toDomainModel(reviews)
-                    business.copy(isFavorite = favorites.contains(business.id))
-                }.sortedByDescending { it.isFavorite }
-
-                originalList = mappedBusinesses
-
-                withContext(Dispatchers.Main) {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        businesses = originalList,
-                        error = null
-                    )
-                    applySortingAndFiltering() // Aplicar búsqueda de texto y ordenación
+                    withContext(Dispatchers.Main) {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            error = result.exceptionOrNull()?.message ?: "Error al cargar negocios"
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = "Error al cargar los negocios: ${e.message}"
+                        error = e.localizedMessage
                     )
                 }
             }
