@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Category
@@ -23,13 +24,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.clickable
+import coil.compose.AsyncImage
 import com.example.topmejorestiendas.core.designsystem.components.BusinessCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,7 +41,8 @@ import com.example.topmejorestiendas.core.designsystem.components.BusinessCard
 fun HomeScreen(
     viewModel: HomeViewModel,
     onNavigateToBusiness: (String) -> Unit,
-    onNavigateToProfile: () -> Unit
+    onNavigateToProfile: () -> Unit,
+    onNavigateToMap: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -48,9 +53,20 @@ fun HomeScreen(
                     title = { Text("Top Tiendas") },
                     actions = {
                         IconButton(onClick = onNavigateToProfile) {
-                            Icon(Icons.Default.AccountCircle, contentDescription = "Mi Perfil")
+                            if (uiState.profilePhotoUrl.isNotEmpty()) {
+                                AsyncImage(
+                                    model = uiState.profilePhotoUrl,
+                                    contentDescription = "Mi Perfil",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape)
+                                )
+                            } else {
+                                Icon(Icons.Default.AccountCircle, contentDescription = "Mi Perfil")
+                            }
                         }
-                        IconButton(onClick = { /* TODO: Toggle Map View */ }) {
+                        IconButton(onClick = onNavigateToMap) {
                             Icon(Icons.Default.Map, contentDescription = "Ver Mapa")
                         }
                     }

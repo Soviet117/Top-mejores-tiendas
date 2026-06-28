@@ -23,7 +23,8 @@ data class HomeUiState(
     val selectedCategory: String = "Todo",
     val searchQuery: String = "",
     val selectedSortOption: String = "Destacados",
-    val error: String? = null
+    val error: String? = null,
+    val profilePhotoUrl: String = ""
 )
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
@@ -34,6 +35,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
+        _uiState.value = _uiState.value.copy(
+            profilePhotoUrl = sessionManager.getProfilePhoto()
+        )
         fetchBusinesses()
     }
 

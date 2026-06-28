@@ -33,6 +33,9 @@ import com.example.topmejorestiendas.feature.dashboard.ui.BusinessReviewsScreen
 import com.example.topmejorestiendas.feature.dashboard.ui.BusinessReviewsViewModel
 import com.example.topmejorestiendas.feature.dashboard.ui.BusinessReviewsViewModelFactory
 import com.example.topmejorestiendas.feature.home.ui.HomeScreen
+import com.example.topmejorestiendas.feature.home.ui.StoreMapScreen
+import com.example.topmejorestiendas.feature.home.ui.StoreMapViewModel
+import com.example.topmejorestiendas.feature.home.ui.StoreMapViewModelFactory
 import com.example.topmejorestiendas.feature.profile.ui.EditProfileScreen
 import com.example.topmejorestiendas.feature.profile.ui.ProfileScreen
 import com.example.topmejorestiendas.feature.profile.ui.ProfileViewModel
@@ -109,7 +112,21 @@ fun AppNavHost(
                 },
                 onNavigateToProfile = {
                     navController.navigate("profile")
+                },
+                onNavigateToMap = {
+                    navController.navigate("store_map")
                 }
+            )
+        }
+
+        composable("store_map") {
+            val storeMapViewModel: StoreMapViewModel = viewModel(factory = StoreMapViewModelFactory(context))
+            StoreMapScreen(
+                viewModel = storeMapViewModel,
+                onNavigateToBusiness = { businessId ->
+                    navController.navigate("business_profile/$businessId")
+                },
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
