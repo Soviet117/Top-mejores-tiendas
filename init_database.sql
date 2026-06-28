@@ -1,6 +1,7 @@
 -- =========================================================================================
--- UbiTop - Base de Datos PostgreSQL Inicial
--- Incluye la creación de tablas basadas en el esquema y algunos datos de prueba.
+-- UbiTop - Base de Datos PostgreSQL (solo esquema)
+-- Crea las 4 tablas del sistema: usuarios, negocios, resenas, reservas
+-- Sin datos de prueba — se crean desde la app al registrarse
 -- =========================================================================================
 
 -- Eliminar tablas si existen (útil para reiniciar la base de datos)
@@ -89,39 +90,6 @@ ALTER TABLE "reservas" ADD CONSTRAINT "reservas_idNegocio_fkey" FOREIGN KEY ("id
 ALTER TABLE "reservas" ADD CONSTRAINT "reservas_idUsuario_fkey" FOREIGN KEY ("idUsuario") REFERENCES "usuarios"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- =========================================================================================
--- DATOS INICIALES DE PRUEBA (SEED)
--- Nota: La contraseña para ambos usuarios de prueba es "123456" (hasheada con bcrypt para Node.js)
+-- Fin del esquema — Sin datos de prueba
+-- Los usuarios, negocios, reseñas y reservas se crean desde la app
 -- =========================================================================================
-
--- Inserción de usuarios
-INSERT INTO "usuarios" ("id", "nombreCompleto", "email", "contrasena", "telefono", "esDuenio", "emailVerificado", "ruc", "razonSocial") 
-VALUES 
-(1, 'Carlos Dueño', 'dueno@ubitop.com', '$2a$12$R.R1sI0l2d/Z8oV4K.q/HOfwXGg8x5Hq/K6lP/c5t2lXv7I8A8Xp6', '999888777', true, true, '20123456789', 'Servicios Deportivos SAC'),
-(2, 'Ana Cliente', 'cliente@ubitop.com', '$2a$12$R.R1sI0l2d/Z8oV4K.q/HOfwXGg8x5Hq/K6lP/c5t2lXv7I8A8Xp6', '987654321', false, true, NULL, NULL);
-
--- Ajustar la secuencia de IDs de usuarios
-SELECT setval(pg_get_serial_sequence('"usuarios"', 'id'), 2);
-
--- Inserción de un negocio
-INSERT INTO "negocios" ("id", "nombreNegocio", "rubro", "direccion", "horario", "calificacionPromedio", "idDuenio", "descripcion", "fotoNegocio") 
-VALUES 
-(1, 'Cancha Sintética El Crack', 'Canchas Sintéticas', 'Av. Las Palmas 123', '08:00 - 22:00', 4.5, 1, 'Las mejores canchas sintéticas con grass artificial de última generación.', 'https://images.unsplash.com/photo-1518605368461-1ee125b29094?auto=format&fit=crop&q=80');
-
--- Ajustar la secuencia de IDs de negocios
-SELECT setval(pg_get_serial_sequence('"negocios"', 'id'), 1);
-
--- Inserción de una reseña de prueba
-INSERT INTO "resenas" ("id", "idUsuario", "idNegocio", "calificacion", "calidadAtencion", "calidadProductos", "costos", "comentario") 
-VALUES 
-(1, 2, 1, 5, 5, 4, 5, 'Excelente estado de las canchas, muy recomendable.');
-
--- Ajustar la secuencia de IDs de reseñas
-SELECT setval(pg_get_serial_sequence('"resenas"', 'id'), 1);
-
--- Inserción de una reserva de prueba
-INSERT INTO "reservas" ("id", "idNegocio", "idUsuario", "fecha", "horaInicio", "horaFin", "estado") 
-VALUES 
-(1, 1, 2, '2026-07-01', '18:00', '19:00', 'CONFIRMADA');
-
--- Ajustar la secuencia de IDs de reservas
-SELECT setval(pg_get_serial_sequence('"reservas"', 'id'), 1);
