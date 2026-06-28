@@ -74,7 +74,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             val result = authRepository.updateProfile(
                 nombreCompleto = fullName.ifBlank { null },
                 telefono = phone.ifBlank { null },
-                fotoPerfil = photoUrl.ifBlank { null },
+                fotoPerfil = com.example.topmejorestiendas.utils.ImageUtils.uriToBase64(getApplication(), photoUrl),
                 ruc = ruc.ifBlank { null }
             )
             

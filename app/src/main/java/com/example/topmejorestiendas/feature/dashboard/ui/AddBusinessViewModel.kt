@@ -62,7 +62,7 @@ class AddBusinessViewModel(application: Application) : AndroidViewModel(applicat
                 longitud = longitude.takeIf { it != 0.0 },
                 descripcion = description.ifBlank { null },
                 precios = prices.ifBlank { null },
-                fotoNegocioBase64 = photoUri.ifBlank { null } // Idealmente subir a Cloudinary y enviar la URL
+                fotoNegocioBase64 = com.example.topmejorestiendas.utils.ImageUtils.uriToBase64(getApplication(), photoUri)
             )
             
             val result = negocioRepository.createNegocio(request)

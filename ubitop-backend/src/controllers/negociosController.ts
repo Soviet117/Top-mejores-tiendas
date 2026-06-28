@@ -2,7 +2,6 @@ import { Response } from 'express';
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import { AuthenticatedRequest } from '../middleware/auth';
-import { uploadImage } from '../services/cloudinaryService';
 
 const prisma = new PrismaClient();
 
@@ -88,13 +87,6 @@ export const getNegocioById = async (req: AuthenticatedRequest, res: Response): 
 export const createNegocio = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const data = CreateNegocioSchema.parse(req.body);
-    let fotoUrl: string | undefined;
-
-    // Subir imagen a Cloudinary si viene en base64
-    if (data.fotoNegocioBase64) {
-      fotoUrl = await uploadImage(data.fotoNegocioBase64, 'negocios');
-    }
-
     const negocio = await prisma.negocio.create({
       data: {
         nombreNegocio: data.nombreNegocio,
@@ -105,7 +97,7 @@ export const createNegocio = async (req: AuthenticatedRequest, res: Response): P
         longitud: data.longitud,
         descripcion: data.descripcion,
         precios: data.precios,
-        fotoNegocio: fotoUrl,
+        fotoNegocio: data.fotoNegocioBase64,
         idDuenio: req.user!.id,
       },
     });
@@ -134,11 +126,6 @@ export const updateNegocio = async (req: AuthenticatedRequest, res: Response): P
       return;
     }
 
-    let fotoUrl: string | undefined;
-    if (data.fotoNegocioBase64) {
-      fotoUrl = await uploadImage(data.fotoNegocioBase64, 'negocios');
-    }
-
     const updated = await prisma.negocio.update({
       where: { id },
       data: {
@@ -150,7 +137,7 @@ export const updateNegocio = async (req: AuthenticatedRequest, res: Response): P
         longitud: data.longitud,
         descripcion: data.descripcion,
         precios: data.precios,
-        ...(fotoUrl ? { fotoNegocio: fotoUrl } : {}),
+        ...(data.fotoNegocioBase64 ? { fotoNegocio: data.fotoNegocioBase64 } : {}),
       },
     });
 

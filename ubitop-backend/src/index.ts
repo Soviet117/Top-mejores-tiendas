@@ -49,7 +49,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 
 // ─── Inicio del Servidor ─────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`🚀 UbiTop API corriendo en el puerto ${PORT}`);
+  console.log(`UbiTop API corriendo en el puerto ${PORT}`);
 });
 
 export default app;

@@ -88,7 +88,7 @@ class EditBusinessViewModel(application: Application) : AndroidViewModel(applica
                 longitud = longitude.takeIf { it != 0.0 },
                 descripcion = description.ifBlank { null },
                 precios = prices.ifBlank { null },
-                fotoNegocioBase64 = photoUri.ifBlank { null }
+                fotoNegocioBase64 = com.example.topmejorestiendas.utils.ImageUtils.uriToBase64(getApplication(), photoUri)
             )
             
             val result = negocioRepository.updateNegocio(businessId, request)

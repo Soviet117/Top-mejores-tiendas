@@ -446,7 +446,13 @@ fun EditBusinessScreen(
                                     val finalPrices = priceEntries
                                         .filter { it.concept.isNotBlank() && it.price.isNotBlank() }
                                         .joinToString(", ") { "${it.concept}: ${it.price}" }
-                                    viewModel.updateBusiness(id, name, category, address, finalSchedule, description, photoUri?.toString() ?: "", latitude, longitude, finalPrices)
+                                        
+                                    val finalPhotoUri = if (photoUri?.toString() != negocio.fotoNegocio) {
+                                        photoUri?.toString() ?: ""
+                                    } else {
+                                        ""
+                                    }
+                                    viewModel.updateBusiness(id, name, category, address, finalSchedule, description, finalPhotoUri, latitude, longitude, finalPrices)
                                 }
                             },
                             modifier = Modifier

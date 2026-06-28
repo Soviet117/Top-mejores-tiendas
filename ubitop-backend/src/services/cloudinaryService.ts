@@ -19,6 +19,11 @@ export const uploadImage = async (
   base64Data: string,
   folder: string = 'general'
 ): Promise<string> => {
+  if (process.env.CLOUDINARY_API_KEY === 'tu_api_key' || !process.env.CLOUDINARY_API_KEY) {
+    console.warn('[CLOUDINARY] Advertencia: Las credenciales de Cloudinary no están configuradas. Devolviendo URL simulada.');
+    return 'https://via.placeholder.com/800x600.png?text=Imagen+Mock';
+  }
+
   const result = await cloudinary.uploader.upload(base64Data, {
     folder: `ubitop/${folder}`,
     resource_type: 'image',
@@ -31,5 +36,9 @@ export const uploadImage = async (
  * Elimina una imagen de Cloudinary dado su public_id.
  */
 export const deleteImage = async (publicId: string): Promise<void> => {
+  if (process.env.CLOUDINARY_API_KEY === 'tu_api_key' || !process.env.CLOUDINARY_API_KEY) {
+    console.warn(`[CLOUDINARY] Omitiendo eliminación de imagen simulada: ${publicId}`);
+    return;
+  }
   await cloudinary.uploader.destroy(publicId);
 };
