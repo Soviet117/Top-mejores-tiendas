@@ -5,6 +5,7 @@ import {
   createResena,
   responderResena,
   deleteResena,
+  verifyQr,
 } from '../controllers/resenasController';
 import { requireAuth, requireOwner } from '../middleware/auth';
 
@@ -16,7 +17,10 @@ resenasRoutes.get('/', getResenas);
 // GET /api/resenas/mias  (requiere auth, historial de reseñas del cliente)
 resenasRoutes.get('/mias', requireAuth, getMisResenas);
 
-// POST /api/resenas  (requiere auth de cliente)
+// POST /api/resenas/verify-qr  (requiere auth, verifica token QR) - ANTES de /:id
+resenasRoutes.post('/verify-qr', requireAuth, verifyQr);
+
+// POST /api/resenas  (requiere auth de cliente + qrToken)
 resenasRoutes.post('/', requireAuth, createResena);
 
 // PATCH /api/resenas/:id/respuesta  (solo dueño del negocio)

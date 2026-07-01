@@ -78,6 +78,12 @@ interface ApiService {
         @Path("id") id: Int
     ): Response<MessageResponse>
 
+    @GET("api/negocios/{id}/qr-token")
+    suspend fun getQrToken(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<QrTokenResponse>
+
     // ─── RESEÑAS ───────────────────────────────────────────────
     @GET("api/resenas")
     suspend fun getResenas(
@@ -94,6 +100,12 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body request: CreateResenaRequest
     ): Response<MessageResponse>
+
+    @POST("api/resenas/verify-qr")
+    suspend fun verifyQrToken(
+        @Header("Authorization") token: String,
+        @Body request: VerifyQrRequest
+    ): Response<VerifyQrResponse>
 
     @PATCH("api/resenas/{id}/respuesta")
     suspend fun responderResena(

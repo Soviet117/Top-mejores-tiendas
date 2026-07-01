@@ -22,12 +22,20 @@ sealed class ManageBusinessUiState {
     data class Error(val message: String) : ManageBusinessUiState()
 }
 
+data class ManageBusinessExtraState(
+    val qrToken: String? = null,
+    val showQrDialog: Boolean = false
+)
+
 class ManageBusinessViewModel(application: Application) : AndroidViewModel(application) {
     private val negocioRepository = NegocioRepository(application)
     private val sessionManager = SessionManager(application)
     
     private val _uiState = MutableStateFlow<ManageBusinessUiState>(ManageBusinessUiState.Loading)
     val uiState: StateFlow<ManageBusinessUiState> = _uiState.asStateFlow()
+
+    private val _extraState = MutableStateFlow(ManageBusinessExtraState())
+    val extraState: StateFlow<ManageBusinessExtraState> = _extraState.asStateFlow()
 
     fun loadBusiness(businessId: Int) {
         _uiState.value = ManageBusinessUiState.Loading
@@ -52,6 +60,7 @@ class ManageBusinessViewModel(application: Application) : AndroidViewModel(appli
                             calificacionPromedio = dto.calificacionPromedio
                         }
                         _uiState.value = ManageBusinessUiState.Success(negocioLocal)
+                        loadQrToken(businessId)
                     },
                     onFailure = {
                         _uiState.value = ManageBusinessUiState.Error(it.message ?: "Local no encontrado.")
@@ -59,6 +68,26 @@ class ManageBusinessViewModel(application: Application) : AndroidViewModel(appli
                 )
             }
         }
+    }
+
+    private fun loadQrToken(businessId: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = negocioRepository.getQrToken(businessId)
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = { token ->
+                        _extraState.value = _extraState.value.copy(qrToken = token)
+                    },
+                    onFailure = {
+                        // Silently fail - QR is optional
+                    }
+                )
+            }
+        }
+    }
+
+    fun toggleQrDialog() {
+        _extraState.value = _extraState.value.copy(showQrDialog = !_extraState.value.showQrDialog)
     }
 
     fun deleteBusiness(businessId: Int, password: String, onResult: (Boolean, String) -> Unit) {

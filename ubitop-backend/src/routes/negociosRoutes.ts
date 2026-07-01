@@ -6,6 +6,7 @@ import {
   updateNegocio,
   deleteNegocio,
   getMisNegocios,
+  getQrToken,
 } from '../controllers/negociosController';
 import { requireAuth, requireOwner } from '../middleware/auth';
 
@@ -16,6 +17,9 @@ negociosRoutes.get('/', getNegocios);
 
 // GET /api/negocios/mios  (solo dueños, ANTES de /:id para evitar conflicto de rutas)
 negociosRoutes.get('/mios', requireAuth, requireOwner, getMisNegocios);
+
+// GET /api/negocios/:id/qr-token  (solo dueño del negocio, ANTES de /:id)
+negociosRoutes.get('/:id/qr-token', requireAuth, requireOwner, getQrToken);
 
 // GET /api/negocios/:id  (público)
 negociosRoutes.get('/:id', getNegocioById);

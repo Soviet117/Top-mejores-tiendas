@@ -4,6 +4,8 @@ import android.content.Context
 import com.example.topmejorestiendas.data.remote.RetrofitClient
 import com.example.topmejorestiendas.data.remote.dto.CreateResenaRequest
 import com.example.topmejorestiendas.data.remote.dto.ResenaDto
+import com.example.topmejorestiendas.data.remote.dto.VerifyQrRequest
+import com.example.topmejorestiendas.data.remote.dto.VerifyQrResponse
 import com.example.topmejorestiendas.utils.SessionManager
 
 class ResenaRepository(context: Context) {
@@ -75,6 +77,24 @@ class ResenaRepository(context: Context) {
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("Error al eliminar la reseña (${response.code()})"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Sin conexión. Verifica tu internet."))
+        }
+    }
+
+    suspend fun verifyQrToken(qrToken: String): Result<VerifyQrResponse> {
+        return try {
+            val response = api.verifyQrToken(token, VerifyQrRequest(qrToken = qrToken))
+            if (response.isSuccessful) {
+                Result.success(response.body()!!)
+            } else {
+                val errorMsg = when (response.code()) {
+                    403 -> "Token QR inválido o acceso expirado"
+                    404 -> "QR no encontrado"
+                    else -> "Error al verificar QR (${response.code()})"
+                }
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(Exception("Sin conexión. Verifica tu internet."))

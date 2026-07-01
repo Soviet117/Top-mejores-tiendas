@@ -89,4 +89,17 @@ class NegocioRepository(context: Context) {
             Result.failure(Exception("Sin conexión. Verifica tu internet."))
         }
     }
+
+    suspend fun getQrToken(businessId: Int): Result<String> {
+        return try {
+            val response = api.getQrToken(token, businessId)
+            if (response.isSuccessful) {
+                Result.success(response.body()!!.qrToken)
+            } else {
+                Result.failure(Exception("Error al obtener token QR (${response.code()})"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Sin conexión. Verifica tu internet."))
+        }
+    }
 }

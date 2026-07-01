@@ -34,6 +34,7 @@ model Usuario {
   negocios  Negocio[]
   resenas   Resena[]
   reservas  Reserva[]
+  qrAccess  QrAccess[]
 
   @@map("usuarios")
 }
@@ -54,13 +55,15 @@ model Negocio {
   descripcion          String?
   precios              String?  // JSON con tabla de precios
   idDuenio             Int
+  qrToken              String   @unique @default(uuid()) // Token único para QR de acceso
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
   // Relaciones
-  duenio   Usuario   @relation(fields: [idDuenio], references: [id], onDelete: Cascade)
-  resenas  Resena[]
-  reservas Reserva[]
+  duenio    Usuario    @relation(fields: [idDuenio], references: [id], onDelete: Cascade)
+  resenas   Resena[]
+  reservas  Reserva[]
+  qrAccess QrAccess[]
 
   @@map("negocios")
 }
@@ -105,4 +108,21 @@ model Reserva {
   usuario  Usuario @relation(fields: [idUsuario], references: [id], onDelete: Cascade)
 
   @@map("reservas")
+}
+
+// ============================================================
+//  ACCESO QR (control de acceso para reseñas)
+// ============================================================
+model QrAccess {
+  id         Int      @id @default(autoincrement())
+  idUsuario  Int
+  idNegocio  Int
+  scannedAt  DateTime @default(now())
+
+  // Relaciones
+  usuario   Usuario @relation(fields: [idUsuario], references: [id], onDelete: Cascade)
+  negocio   Negocio @relation(fields: [idNegocio], references: [id], onDelete: Cascade)
+
+  @@unique([idUsuario, idNegocio])
+  @@map("qr_access")
 }

@@ -12,6 +12,11 @@ const CreateResenaSchema = z.object({
   calidadProductos: z.number().int().min(1).max(5),
   costos: z.number().int().min(1).max(5),
   comentario: z.string().optional(),
+  qrToken: z.string().uuid(), // Token QR requerido para crear reseña
+});
+
+const VerifyQrSchema = z.object({
+  qrToken: z.string().uuid(),
 });
 
 const RespuestaDuenioSchema = z.object({
@@ -77,10 +82,101 @@ export const getMisResenas = async (req: AuthenticatedRequest, res: Response): P
   }
 };
 
+// ─── POST /api/resenas/verify-qr ─────────────────────────────
+// Verifica si un token QR es válido y registra el acceso
+export const verifyQr = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { qrToken } = VerifyQrSchema.parse(req.body);
+
+    // Buscar el negocio por qrToken
+    const negocio = await prisma.negocio.findUnique({
+      where: { qrToken },
+      select: { id: true, nombreNegocio: true },
+    });
+
+    if (!negocio) {
+      res.status(404).json({ error: 'QR inválido o negocio no encontrado' });
+      return;
+    }
+
+    // Registrar el escaneo (o actualizar si ya existía)
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    // Verificar si ya tiene acceso activo
+    const existingAccess = await prisma.qrAccess.findUnique({
+      where: { idUsuario_idNegocio: { idUsuario: req.user!.id, idNegocio: negocio.id } },
+    });
+
+    if (existingAccess && existingAccess.scannedAt > twentyFourHoursAgo) {
+      // Ya tiene acceso activo
+      res.status(200).json({
+        autorizado: true,
+        negocioId: negocio.id,
+        nombreNegocio: negocio.nombreNegocio,
+        mensaje: 'Ya tienes acceso activo para dejar reseñas',
+      });
+      return;
+    }
+
+    // Crear o actualizar el registro de acceso
+    if (existingAccess) {
+      await prisma.qrAccess.update({
+        where: { id: existingAccess.id },
+        data: { scannedAt: now },
+      });
+    } else {
+      await prisma.qrAccess.create({
+        data: {
+          idUsuario: req.user!.id,
+          idNegocio: negocio.id,
+          scannedAt: now,
+        },
+      });
+    }
+
+    res.status(200).json({
+      autorizado: true,
+      negocioId: negocio.id,
+      nombreNegocio: negocio.nombreNegocio,
+      mensaje: 'Acceso habilitado por 24 horas',
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Token QR inválido', details: error.errors });
+      return;
+    }
+    console.error('[RESENAS] verifyQr error:', error);
+    res.status(500).json({ error: 'Error al verificar el QR' });
+  }
+};
+
 // ─── POST /api/resenas ───────────────────────────────────────
 export const createResena = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const data = CreateResenaSchema.parse(req.body);
+
+    // Validar que el qrToken pertenezca al negocio que se quiere reseñar
+    const negocio = await prisma.negocio.findUnique({
+      where: { id: data.idNegocio },
+      select: { qrToken: true },
+    });
+
+    if (!negocio || negocio.qrToken !== data.qrToken) {
+      res.status(403).json({ error: 'Token QR inválido para este negocio' });
+      return;
+    }
+
+    // Verificar que el usuario tenga acceso activo (últimas 24 horas)
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const access = await prisma.qrAccess.findUnique({
+      where: { idUsuario_idNegocio: { idUsuario: req.user!.id, idNegocio: data.idNegocio } },
+    });
+
+    if (!access || access.scannedAt < twentyFourHoursAgo) {
+      res.status(403).json({ error: 'Debes escanear el QR del local para poder reseñar (acceso expirado o inexistente)' });
+      return;
+    }
 
     // Evitar doble reseña del mismo usuario al mismo negocio
     const existing = await prisma.resena.findFirst({

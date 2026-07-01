@@ -146,7 +146,8 @@ data class CreateResenaRequest(
     @SerializedName("calidadAtencion") val calidadAtencion: Int,
     @SerializedName("calidadProductos") val calidadProductos: Int,
     @SerializedName("costos") val costos: Int,
-    @SerializedName("comentario") val comentario: String? = null
+    @SerializedName("comentario") val comentario: String? = null,
+    @SerializedName("qrToken") val qrToken: String
 )
 
 // ─── Reservas ──────────────────────────────────────────────
@@ -210,4 +211,21 @@ data class MessageResponse(
 data class ApiError(
     @SerializedName("error") val error: String,
     @SerializedName("details") val details: List<Any>? = null
+)
+
+// ─── QR Token ──────────────────────────────────────────────
+
+data class QrTokenResponse(
+    @SerializedName("qrToken") val qrToken: String
+)
+
+data class VerifyQrRequest(
+    @SerializedName("qrToken") val qrToken: String
+)
+
+data class VerifyQrResponse(
+    @SerializedName("autorizado") val autorizado: Boolean,
+    @SerializedName("negocioId") val negocioId: Int,
+    @SerializedName("nombreNegocio") val nombreNegocio: String,
+    @SerializedName("mensaje") val mensaje: String
 )

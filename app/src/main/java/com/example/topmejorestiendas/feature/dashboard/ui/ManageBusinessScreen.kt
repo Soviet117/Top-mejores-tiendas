@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.RateReview
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,6 +27,7 @@ fun ManageBusinessScreen(
     onNavigateToReviews: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val extraState by viewModel.extraState.collectAsState()
     val context = LocalContext.current
     var showDeleteDialog by remember { mutableStateOf(false) }
     var deletePassword by remember { mutableStateOf("") }
@@ -131,6 +133,30 @@ fun ManageBusinessScreen(
                             }
                         }
 
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Card(
+                            onClick = { viewModel.toggleQrDialog() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.QrCode, contentDescription = null, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text("Código QR de Acceso", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                    Text("Muestra este QR para que tus clientes puedan reseñar.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                }
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(32.dp))
                         Divider()
                         Spacer(modifier = Modifier.height(16.dp))
@@ -159,6 +185,31 @@ fun ManageBusinessScreen(
                     }
                 }
             }
+        }
+
+        if (extraState.showQrDialog && extraState.qrToken != null) {
+            val negocio = (uiState as? ManageBusinessUiState.Success)?.negocio
+            AlertDialog(
+                onDismissRequest = { viewModel.toggleQrDialog() },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.QrCode, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Código QR de Acceso")
+                    }
+                },
+                text = {
+                    BusinessQrCard(
+                        qrToken = extraState.qrToken!!,
+                        businessName = negocio?.nombreNegocio ?: "Mi Negocio"
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.toggleQrDialog() }) {
+                        Text("Cerrar")
+                    }
+                }
+            )
         }
 
         if (showDeleteDialog) {

@@ -1,5 +1,10 @@
 package com.example.topmejorestiendas.feature.business.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
@@ -13,6 +18,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
@@ -23,11 +29,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
 import com.example.topmejorestiendas.feature.common.ui.OsmMap
 import com.example.topmejorestiendas.model.Resena
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.launch
@@ -43,6 +53,41 @@ fun BusinessProfileScreen(
     var showRatingDialog by remember { mutableStateOf(false) }
     var showReportDialog by remember { mutableStateOf(false) }
     val isEditing = uiState.userReview != null
+    val context = LocalContext.current
+
+    // Scanner launcher
+    val scannerLauncher = rememberLauncherForActivityResult(
+        contract = ScanContract()
+    ) { result ->
+        if (result.contents != null) {
+            viewModel.verifyQrToken(result.contents)
+        }
+    }
+
+    // Permission launcher for camera
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            val options = ScanOptions()
+                .setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                .setPrompt("Escanea el QR del local")
+                .setCameraId(0)
+                .setBeepEnabled(false)
+                .setOrientationLocked(true)
+            scannerLauncher.launch(options)
+        } else {
+            Toast.makeText(context, "Permiso de cámara necesario para escanear QR", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Show QR access messages
+    LaunchedEffect(uiState.qrAccessMessage) {
+        uiState.qrAccessMessage?.let { message ->
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            viewModel.clearQrMessage()
+        }
+    }
 
     if (uiState.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -80,11 +125,39 @@ fun BusinessProfileScreen(
                         contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
-                    ExtendedFloatingActionButton(
-                        onClick = { showRatingDialog = true },
-                        icon = { Icon(Icons.Filled.Star, contentDescription = if (isEditing) "Editar Reseña" else "Calificar") },
-                        text = { Text(if (isEditing) "Editar Reseña" else "Escribir Reseña") }
-                    )
+                    if (!uiState.hasReviewAccess) {
+                        // Show QR scanner button when no access
+                        ExtendedFloatingActionButton(
+                            onClick = {
+                                val hasCameraPermission = ContextCompat.checkSelfPermission(
+                                    context, Manifest.permission.CAMERA
+                                ) == PackageManager.PERMISSION_GRANTED
+                                if (hasCameraPermission) {
+                                    val options = ScanOptions()
+                                        .setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                                        .setPrompt("Escanea el QR del local")
+                                        .setCameraId(0)
+                                        .setBeepEnabled(false)
+                                        .setOrientationLocked(true)
+                                    scannerLauncher.launch(options)
+                                } else {
+                                    permissionLauncher.launch(Manifest.permission.CAMERA)
+                                }
+                            },
+                            icon = { Icon(Icons.Filled.QrCodeScanner, contentDescription = "Escanear QR") },
+                            text = { Text("Escanear QR para Reseñar") },
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                    } else {
+                        // Show review button when access is granted
+                        ExtendedFloatingActionButton(
+                            onClick = { showRatingDialog = true },
+                            icon = { Icon(Icons.Filled.Star, contentDescription = if (isEditing) "Editar Reseña" else "Calificar") },
+                            text = { Text(if (isEditing) "Editar Reseña" else "Escribir Reseña") }
+                        )
+                    }
                 }
             }
         }

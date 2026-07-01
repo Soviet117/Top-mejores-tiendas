@@ -23,10 +23,13 @@ import kotlinx.coroutines.withContext
 data class BusinessProfileUiState(
     val isLoading: Boolean = true,
     val business: Business? = null,
-    val reviews: List<Resena> = emptyList(), // Retaining local Resena type for UI compatibility where possible, or map it.
+    val reviews: List<Resena> = emptyList(),
     val error: String? = null,
     val isGuest: Boolean = false,
-    val userReview: Resena? = null
+    val userReview: Resena? = null,
+    val hasReviewAccess: Boolean = false,
+    val qrAccessMessage: String? = null,
+    val showQrScanner: Boolean = false
 )
 
 class BusinessProfileViewModel(
@@ -125,6 +128,44 @@ class BusinessProfileViewModel(
         }
     }
 
+    fun toggleQrScanner() {
+        _uiState.value = _uiState.value.copy(
+            showQrScanner = !_uiState.value.showQrScanner
+        )
+    }
+
+    fun verifyQrToken(qrToken: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = resenaRepository.verifyQrToken(qrToken)
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = { response ->
+                        if (response.autorizado) {
+                            _uiState.value = _uiState.value.copy(
+                                hasReviewAccess = true,
+                                qrAccessMessage = response.mensaje,
+                                showQrScanner = false
+                            )
+                        } else {
+                            _uiState.value = _uiState.value.copy(
+                                qrAccessMessage = "Acceso denegado"
+                            )
+                        }
+                    },
+                    onFailure = { error ->
+                        _uiState.value = _uiState.value.copy(
+                            qrAccessMessage = error.message ?: "Error al verificar QR"
+                        )
+                    }
+                )
+            }
+        }
+    }
+
+    fun clearQrMessage() {
+        _uiState.value = _uiState.value.copy(qrAccessMessage = null)
+    }
+
     fun submitReview(ratingAtencion: Int, ratingProducto: Int, ratingCosto: Int, comment: String) {
         val bId = businessId.toIntOrNull() ?: return
         val currentUserId = sessionManager.userId
@@ -133,28 +174,39 @@ class BusinessProfileViewModel(
             return
         }
 
+        if (!_uiState.value.hasReviewAccess) {
+            _uiState.value = _uiState.value.copy(
+                qrAccessMessage = "Debes escanear el QR del local primero"
+            )
+            return
+        }
+
         val calificacionGlobal = (ratingAtencion + ratingProducto + ratingCosto) / 3
 
         viewModelScope.launch(Dispatchers.IO) {
+            // Obtener el qrToken del negocio para enviarlo en la reseña
+            val qrTokenResult = negocioRepository.getQrToken(bId)
+            val qrToken = qrTokenResult.getOrNull() ?: ""
+
             val request = CreateResenaRequest(
                 idNegocio = bId,
                 calificacion = calificacionGlobal,
                 calidadAtencion = ratingAtencion,
                 calidadProductos = ratingProducto,
                 costos = ratingCosto,
-                comentario = comment.ifBlank { null }
+                comentario = comment.ifBlank { null },
+                qrToken = qrToken
             )
             
-            // Si ya existe, en un backend ideal tendríamos un PUT /api/resenas/{id}
-            // Como createResena devuelve 409 si ya existe, el usuario no puede actualizarla a menos que agreguemos el endpoint.
-            // Por ahora, asumiremos que se crea.
             val result = resenaRepository.createResena(request)
             
             if (result.isSuccess) {
+                _uiState.value = _uiState.value.copy(hasReviewAccess = false)
                 loadBusinessData()
             } else {
-                // Here we would handle the error, e.g. show a toast
-                // Currently just reloading
+                _uiState.value = _uiState.value.copy(
+                    qrAccessMessage = result.exceptionOrNull()?.message ?: "Error al crear reseña"
+                )
                 loadBusinessData()
             }
         }

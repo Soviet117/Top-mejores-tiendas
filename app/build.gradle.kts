@@ -131,5 +131,8 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("com.google.code.gson:gson:2.11.0")
 
+    // QR Scanner (para clientes - escanear QR) + Generator (incluido via zxing)
+    implementation(libs.zxing.embedded)
+
     // Hilt
 }

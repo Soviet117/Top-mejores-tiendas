@@ -189,3 +189,28 @@ export const getMisNegocios = async (req: AuthenticatedRequest, res: Response): 
     res.status(500).json({ error: 'Error al obtener tus negocios' });
   }
 };
+
+// ─── GET /api/negocios/:id/qr-token ──────────────────────────
+// Solo el dueño puede ver el token QR de su negocio
+export const getQrToken = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const id = parseInt(req.params.id);
+
+    const negocio = await prisma.negocio.findUnique({ where: { id } });
+
+    if (!negocio) {
+      res.status(404).json({ error: 'Negocio no encontrado' });
+      return;
+    }
+
+    if (negocio.idDuenio !== req.user!.id) {
+      res.status(403).json({ error: 'No tienes permiso para ver el QR de este negocio' });
+      return;
+    }
+
+    res.status(200).json({ qrToken: negocio.qrToken });
+  } catch (error) {
+    console.error('[NEGOCIOS] getQrToken error:', error);
+    res.status(500).json({ error: 'Error al obtener el token QR' });
+  }
+};
