@@ -259,6 +259,8 @@ export const sendVerificationCodeHandler = async (req: Request, res: Response): 
 
     const otpCode = await sendEmail(email);
 
+    console.log(`[AUTH] Código OTP para ${email}: ${otpCode} — visible en logs si el correo no llega`);
+
     res.status(200).json({
       message: 'C\u00f3digo enviado a tu correo',
       otpCode,

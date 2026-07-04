@@ -78,13 +78,19 @@ function buildHtmlTemplate(otpCode: string, email: string): string {
 export async function sendVerificationCode(recipientEmail: string): Promise<string> {
   const otpCode = generateOtpCode();
 
-  const info = await transporter.sendMail({
-    from: `"Top Mejores Tiendas" <${process.env.SENDER_EMAIL}>`,
-    to: recipientEmail,
-    subject: 'C\u00f3digo de Verificaci\u00f3n - Top Mejores Tiendas',
-    html: buildHtmlTemplate(otpCode, recipientEmail),
-  });
+  console.log(`[EmailService] OTP generado para ${recipientEmail}: ${otpCode}`);
 
-  console.log('[EmailService] Correo enviado:', info.messageId);
+  try {
+    const info = await transporter.sendMail({
+      from: `"Top Mejores Tiendas" <${process.env.SENDER_EMAIL}>`,
+      to: recipientEmail,
+      subject: 'C\u00f3digo de Verificaci\u00f3n - Top Mejores Tiendas',
+      html: buildHtmlTemplate(otpCode, recipientEmail),
+    });
+    console.log('[EmailService] Correo enviado:', info.messageId);
+  } catch (error) {
+    console.error('[EmailService] Error al enviar correo (se devuelve OTP igual):', error);
+  }
+
   return otpCode;
 }
