@@ -143,13 +143,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }.onFailure { error ->
                 val msg = error.message ?: "Error desconocido"
-                val userMessage = if (msg.contains("datos móviles", ignoreCase = true) ||
-                    msg.contains("WiFi universitaria", ignoreCase = true)) {
-                    msg + "\n\n💡 Sugerencia: Desactiva el WiFi y usa tus datos móviles para verificar tu correo."
-                } else {
-                    "No se pudo enviar el código: $msg"
-                }
-                _emailVerificationState.value = EmailVerificationState.Error(userMessage)
+                _emailVerificationState.value = EmailVerificationState.Error(msg)
             }
         }
     }
