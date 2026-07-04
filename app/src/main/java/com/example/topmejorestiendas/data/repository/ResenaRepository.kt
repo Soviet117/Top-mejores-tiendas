@@ -70,6 +70,23 @@ class ResenaRepository(context: Context) {
         }
     }
 
+    suspend fun updateResena(resenaId: Int, request: CreateResenaRequest): Result<Unit> {
+        return try {
+            val response = api.updateResena(token, resenaId, request)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                val errorMsg = when (response.code()) {
+                    403 -> "Acceso expirado o QR inválido"
+                    else -> "Error al actualizar la reseña (${response.code()})"
+                }
+                Result.failure(Exception(errorMsg))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Sin conexión. Verifica tu internet."))
+        }
+    }
+
     suspend fun deleteResena(resenaId: Int): Result<Unit> {
         return try {
             val response = api.deleteResena(token, resenaId)

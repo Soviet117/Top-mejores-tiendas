@@ -2,6 +2,8 @@ package com.example.topmejorestiendas.data.repository
 
 import android.content.Context
 import com.example.topmejorestiendas.data.remote.RetrofitClient
+import com.example.topmejorestiendas.data.remote.dto.CategoriaDto
+import com.example.topmejorestiendas.data.remote.dto.CreateCategoriaRequest
 import com.example.topmejorestiendas.data.remote.dto.CreateNegocioRequest
 import com.example.topmejorestiendas.data.remote.dto.NegocioDto
 import com.example.topmejorestiendas.utils.SessionManager
@@ -84,6 +86,33 @@ class NegocioRepository(context: Context) {
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("Error al eliminar el negocio (${response.code()})"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Sin conexión. Verifica tu internet."))
+        }
+    }
+
+    suspend fun getCategorias(): Result<List<CategoriaDto>> {
+        return try {
+            val response = api.getCategorias()
+            if (response.isSuccessful) {
+                Result.success(response.body()!!.categorias)
+            } else {
+                Result.failure(Exception("Error al obtener categorías (${response.code()})"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Sin conexión. Verifica tu internet."))
+        }
+    }
+
+    suspend fun createCategoria(nombre: String): Result<CategoriaDto> {
+        return try {
+            val response = api.createCategoria(token, CreateCategoriaRequest(nombre = nombre))
+            if (response.isSuccessful) {
+                Result.success(response.body()!!)
+            } else {
+                val msg = if (response.code() == 409) "La categoría ya existe" else "Error al crear categoría (${response.code()})"
+                Result.failure(Exception(msg))
             }
         } catch (e: Exception) {
             Result.failure(Exception("Sin conexión. Verifica tu internet."))

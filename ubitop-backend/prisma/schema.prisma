@@ -111,6 +111,18 @@ model Reserva {
 }
 
 // ============================================================
+//  CATEGORIAS (dinámicas)
+// ============================================================
+model Categoria {
+  id     Int    @id @default(autoincrement())
+  nombre String @unique
+  icono  String @default("Category")
+  color  String @default("#757575")
+
+  @@map("categorias")
+}
+
+// ============================================================
 //  ACCESO QR (control de acceso para reseñas)
 // ============================================================
 model QrAccess {

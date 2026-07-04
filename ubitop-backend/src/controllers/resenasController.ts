@@ -19,6 +19,15 @@ const VerifyQrSchema = z.object({
   qrToken: z.string().uuid(),
 });
 
+const UpdateResenaSchema = z.object({
+  calificacion: z.number().int().min(1).max(5),
+  calidadAtencion: z.number().int().min(1).max(5),
+  calidadProductos: z.number().int().min(1).max(5),
+  costos: z.number().int().min(1).max(5),
+  comentario: z.string().optional(),
+  qrToken: z.string().uuid(),
+});
+
 const RespuestaDuenioSchema = z.object({
   respuestaDuenio: z.string().min(1),
 });
@@ -109,11 +118,11 @@ export const verifyQr = async (req: AuthenticatedRequest, res: Response): Promis
     });
 
     if (existingAccess && existingAccess.scannedAt > twentyFourHoursAgo) {
-      // Ya tiene acceso activo
       res.status(200).json({
         autorizado: true,
         negocioId: negocio.id,
         nombreNegocio: negocio.nombreNegocio,
+        qrToken,
         mensaje: 'Ya tienes acceso activo para dejar reseñas',
       });
       return;
@@ -139,6 +148,7 @@ export const verifyQr = async (req: AuthenticatedRequest, res: Response): Promis
       autorizado: true,
       negocioId: negocio.id,
       nombreNegocio: negocio.nombreNegocio,
+      qrToken,
       mensaje: 'Acceso habilitado por 24 horas',
     });
   } catch (error) {
@@ -214,6 +224,71 @@ export const createResena = async (req: AuthenticatedRequest, res: Response): Pr
     }
     console.error('[RESENAS] createResena error:', error);
     res.status(500).json({ error: 'Error al crear la reseña' });
+  }
+};
+
+// ─── PUT /api/resenas/:id ─────────────────────────────────────
+export const updateResena = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const id = parseInt(req.params.id);
+    const data = UpdateResenaSchema.parse(req.body);
+
+    const existing = await prisma.resena.findUnique({ where: { id } });
+    if (!existing) {
+      res.status(404).json({ error: 'Reseña no encontrada' });
+      return;
+    }
+
+    if (existing.idUsuario !== req.user!.id) {
+      res.status(403).json({ error: 'No puedes editar reseñas ajenas' });
+      return;
+    }
+
+    // Validar qrToken y acceso activo
+    const negocio = await prisma.negocio.findUnique({
+      where: { id: existing.idNegocio },
+      select: { qrToken: true },
+    });
+
+    if (!negocio || negocio.qrToken !== data.qrToken) {
+      res.status(403).json({ error: 'Token QR inválido para este negocio' });
+      return;
+    }
+
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const access = await prisma.qrAccess.findUnique({
+      where: { idUsuario_idNegocio: { idUsuario: req.user!.id, idNegocio: existing.idNegocio } },
+    });
+
+    if (!access || access.scannedAt < twentyFourHoursAgo) {
+      res.status(403).json({ error: 'Acceso expirado. Escanea el QR nuevamente.' });
+      return;
+    }
+
+    const updated = await prisma.resena.update({
+      where: { id },
+      data: {
+        calificacion: data.calificacion,
+        calidadAtencion: data.calidadAtencion,
+        calidadProductos: data.calidadProductos,
+        costos: data.costos,
+        comentario: data.comentario,
+      },
+      include: {
+        usuario: { select: { id: true, nombreCompleto: true, fotoPerfil: true } },
+      },
+    });
+
+    await recalcularCalificacion(existing.idNegocio);
+
+    res.status(200).json({ message: 'Reseña actualizada exitosamente', resena: updated });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Datos inválidos', details: error.errors });
+      return;
+    }
+    console.error('[RESENAS] updateResena error:', error);
+    res.status(500).json({ error: 'Error al actualizar la reseña' });
   }
 };
 

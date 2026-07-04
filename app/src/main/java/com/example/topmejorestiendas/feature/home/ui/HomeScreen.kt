@@ -153,14 +153,17 @@ fun HomeScreen(
                                 columns = GridCells.Fixed(2),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                                modifier = Modifier.heightIn(max = 600.dp) // Para permitir el scroll en la columna padre sin conflictos graves
+                                modifier = Modifier.heightIn(max = 600.dp)
                             ) {
                                 items(displayCategories) { category ->
+                                    val catInfo = uiState.rawCategories.find { it.nombre == category }
                                     CategoryGridCard(
                                         categoryName = category,
+                                        iconName = catInfo?.icono,
                                         onClick = { viewModel.onCategorySelected(category) }
                                     )
                                 }
+                            }
                             }
                         }
                     }
@@ -260,20 +263,24 @@ fun HomeScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CategoryGridCard(categoryName: String, onClick: () -> Unit) {
-    val icon = when (categoryName) {
-        "Restaurantes" -> Icons.Default.Fastfood
-        "Canchas Sintéticas" -> Icons.Default.SportsSoccer
-        "Piscinas" -> Icons.Default.Pool
-        "Cafeterías" -> Icons.Default.Coffee
-        "Gimnasios" -> Icons.Default.FitnessCenter
-        "Tiendas de Ropa" -> Icons.Default.ShoppingBag
-        "Farmacias" -> Icons.Default.LocalPharmacy
-        "Supermercados" -> Icons.Default.LocalGroceryStore
+fun mapCategoryIcon(iconName: String?): ImageVector {
+    return when (iconName) {
+        "Fastfood" -> Icons.Default.Fastfood
+        "SportsSoccer" -> Icons.Default.SportsSoccer
+        "Pool" -> Icons.Default.Pool
+        "Coffee" -> Icons.Default.Coffee
+        "FitnessCenter" -> Icons.Default.FitnessCenter
+        "ShoppingBag" -> Icons.Default.ShoppingBag
+        "LocalPharmacy" -> Icons.Default.LocalPharmacy
+        "LocalGroceryStore" -> Icons.Default.LocalGroceryStore
         else -> Icons.Default.Category
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CategoryGridCard(categoryName: String, iconName: String? = null, onClick: () -> Unit) {
+    val icon = mapCategoryIcon(iconName)
 
     Card(
         onClick = onClick,

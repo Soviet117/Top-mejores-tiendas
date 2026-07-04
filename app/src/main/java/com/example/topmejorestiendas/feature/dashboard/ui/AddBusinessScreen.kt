@@ -182,8 +182,12 @@ fun AddBusinessScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val predefinedCategories = listOf("Restaurantes", "Canchas Sintéticas", "Piscinas", "Cafeterías", "Gimnasios", "Tiendas de Ropa", "Farmacias", "Supermercados", "Otros")
+            val dbCategories by viewModel.categorias.collectAsState()
             var expandedCategory by remember { mutableStateOf(false) }
+            var showNewCategoryDialog by remember { mutableStateOf(false) }
+            var newCategoryName by remember { mutableStateOf("") }
+
+            LaunchedEffect(Unit) { viewModel.loadCategorias() }
 
             ExposedDropdownMenuBox(
                 expanded = expandedCategory,
@@ -203,17 +207,57 @@ fun AddBusinessScreen(
                     expanded = expandedCategory,
                     onDismissRequest = { expandedCategory = false }
                 ) {
-                    predefinedCategories.forEach { selectionOption ->
+                    dbCategories.forEach { cat ->
                         DropdownMenuItem(
-                            text = { Text(selectionOption) },
+                            text = { Text(cat.nombre) },
                             onClick = {
-                                category = selectionOption
+                                category = cat.nombre
                                 viewModel.clearError()
                                 expandedCategory = false
                             }
                         )
                     }
+                    DropdownMenuItem(
+                        text = { Text("➕ Agregar nueva categoría...") },
+                        onClick = {
+                            expandedCategory = false
+                            showNewCategoryDialog = true
+                        }
+                    )
                 }
+            }
+
+            if (showNewCategoryDialog) {
+                AlertDialog(
+                    onDismissRequest = { showNewCategoryDialog = false },
+                    title = { Text("Nueva Categoría") },
+                    text = {
+                        OutlinedTextField(
+                            value = newCategoryName,
+                            onValueChange = { newCategoryName = it },
+                            label = { Text("Nombre de la categoría") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            val name = newCategoryName.trim()
+                            if (name.isNotBlank()) {
+                                viewModel.createCategoria(name) { success ->
+                                    if (success) {
+                                        category = name
+                                        newCategoryName = ""
+                                        showNewCategoryDialog = false
+                                    }
+                                }
+                            }
+                        }) { Text("Crear") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showNewCategoryDialog = false; newCategoryName = "" }) { Text("Cancelar") }
+                    }
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))

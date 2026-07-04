@@ -310,7 +310,12 @@ private fun createPhotoCircleBitmap(photo: Bitmap, ctx: Context): Bitmap {
     return bitmap
 }
 
-private fun getCategoryColor(category: String): Int {
+private fun getCategoryColor(category: String, colorHex: String? = null): Int {
+    if (colorHex != null) {
+        try {
+            return android.graphics.Color.parseColor(colorHex)
+        } catch (_: Exception) { }
+    }
     return when (category.lowercase().trim()) {
         "restaurante" -> 0xFFE53935.toInt()
         "cafetería", "cafeteria" -> 0xFF795548.toInt()
@@ -329,7 +334,7 @@ private fun getCategoryColor(category: String): Int {
     }
 }
 
-private fun createBusinessMarkerBitmap(photo: Bitmap?, category: String, ctx: Context): Bitmap {
+private fun createBusinessMarkerBitmap(photo: Bitmap?, category: String, ctx: Context, colorHex: String? = null): Bitmap {
     val density = ctx.resources.displayMetrics.density
     val photoWidthPx = (64 * density).toInt()
     val barHeightPx = (18 * density).toInt()

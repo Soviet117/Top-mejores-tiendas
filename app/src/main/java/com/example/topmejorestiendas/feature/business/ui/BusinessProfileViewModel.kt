@@ -28,6 +28,7 @@ data class BusinessProfileUiState(
     val isGuest: Boolean = false,
     val userReview: Resena? = null,
     val hasReviewAccess: Boolean = false,
+    val scannedQrToken: String = "",
     val qrAccessMessage: String? = null,
     val showQrScanner: Boolean = false
 )
@@ -143,6 +144,7 @@ class BusinessProfileViewModel(
                         if (response.autorizado) {
                             _uiState.value = _uiState.value.copy(
                                 hasReviewAccess = true,
+                                scannedQrToken = qrToken,
                                 qrAccessMessage = response.mensaje,
                                 showQrScanner = false
                             )
@@ -170,9 +172,7 @@ class BusinessProfileViewModel(
         val bId = businessId.toIntOrNull() ?: return
         val currentUserId = sessionManager.userId
         
-        if (currentUserId == -1) {
-            return
-        }
+        if (currentUserId == -1) return
 
         if (!_uiState.value.hasReviewAccess) {
             _uiState.value = _uiState.value.copy(
@@ -181,33 +181,49 @@ class BusinessProfileViewModel(
             return
         }
 
+        val qrToken = _uiState.value.scannedQrToken
+        if (qrToken.isBlank()) {
+            _uiState.value = _uiState.value.copy(
+                qrAccessMessage = "Error: QR token no encontrado. Escanea el QR nuevamente."
+            )
+            return
+        }
+
         val calificacionGlobal = (ratingAtencion + ratingProducto + ratingCosto) / 3
 
-        viewModelScope.launch(Dispatchers.IO) {
-            // Obtener el qrToken del negocio para enviarlo en la reseña
-            val qrTokenResult = negocioRepository.getQrToken(bId)
-            val qrToken = qrTokenResult.getOrNull() ?: ""
+        val request = CreateResenaRequest(
+            idNegocio = bId,
+            calificacion = calificacionGlobal,
+            calidadAtencion = ratingAtencion,
+            calidadProductos = ratingProducto,
+            costos = ratingCosto,
+            comentario = comment.ifBlank { null },
+            qrToken = qrToken
+        )
 
-            val request = CreateResenaRequest(
-                idNegocio = bId,
-                calificacion = calificacionGlobal,
-                calidadAtencion = ratingAtencion,
-                calidadProductos = ratingProducto,
-                costos = ratingCosto,
-                comentario = comment.ifBlank { null },
-                qrToken = qrToken
-            )
-            
-            val result = resenaRepository.createResena(request)
-            
-            if (result.isSuccess) {
-                _uiState.value = _uiState.value.copy(hasReviewAccess = false)
-                loadBusinessData()
+        viewModelScope.launch(Dispatchers.IO) {
+            val userReview = _uiState.value.userReview
+            val result = if (userReview != null) {
+                resenaRepository.updateResena(userReview.id, request)
             } else {
-                _uiState.value = _uiState.value.copy(
-                    qrAccessMessage = result.exceptionOrNull()?.message ?: "Error al crear reseña"
+                resenaRepository.createResena(request)
+            }
+
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = {
+                        _uiState.value = _uiState.value.copy(
+                            qrAccessMessage = if (userReview != null) "Reseña actualizada" else "Reseña creada exitosamente"
+                        )
+                        loadBusinessData()
+                    },
+                    onFailure = { error ->
+                        _uiState.value = _uiState.value.copy(
+                            qrAccessMessage = error.message ?: "Error al procesar la reseña"
+                        )
+                        loadBusinessData()
+                    }
                 )
-                loadBusinessData()
             }
         }
     }

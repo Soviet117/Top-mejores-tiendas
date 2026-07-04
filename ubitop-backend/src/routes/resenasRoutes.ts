@@ -3,6 +3,7 @@ import {
   getResenas,
   getMisResenas,
   createResena,
+  updateResena,
   responderResena,
   deleteResena,
   verifyQr,
@@ -22,6 +23,9 @@ resenasRoutes.post('/verify-qr', requireAuth, verifyQr);
 
 // POST /api/resenas  (requiere auth de cliente + qrToken)
 resenasRoutes.post('/', requireAuth, createResena);
+
+// PUT /api/resenas/:id  (requiere auth + qrToken, actualiza reseña propia)
+resenasRoutes.put('/:id', requireAuth, updateResena);
 
 // PATCH /api/resenas/:id/respuesta  (solo dueño del negocio)
 resenasRoutes.patch('/:id/respuesta', requireAuth, requireOwner, responderResena);

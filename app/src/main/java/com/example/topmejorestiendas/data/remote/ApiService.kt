@@ -44,6 +44,16 @@ interface ApiService {
         @Body request: DeleteAccountRequest
     ): Response<MessageResponse>
 
+    // ─── CATEGORIAS ────────────────────────────────────────────
+    @GET("api/categorias")
+    suspend fun getCategorias(): Response<CategoriasResponse>
+
+    @POST("api/categorias")
+    suspend fun createCategoria(
+        @Header("Authorization") token: String,
+        @Body request: CreateCategoriaRequest
+    ): Response<CategoriaDto>
+
     // ─── NEGOCIOS ──────────────────────────────────────────────
     @GET("api/negocios")
     suspend fun getNegocios(
@@ -106,6 +116,13 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body request: VerifyQrRequest
     ): Response<VerifyQrResponse>
+
+    @PUT("api/resenas/{id}")
+    suspend fun updateResena(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Body request: CreateResenaRequest
+    ): Response<MessageResponse>
 
     @PATCH("api/resenas/{id}/respuesta")
     suspend fun responderResena(

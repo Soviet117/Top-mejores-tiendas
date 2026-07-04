@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.topmejorestiendas.data.remote.dto.CategoriaDto
 import com.example.topmejorestiendas.data.remote.dto.CreateNegocioRequest
 import com.example.topmejorestiendas.data.repository.NegocioRepository
 import com.example.topmejorestiendas.utils.SessionManager
@@ -27,6 +28,39 @@ class AddBusinessViewModel(application: Application) : AndroidViewModel(applicat
     
     private val _uiState = MutableStateFlow(AddBusinessState())
     val uiState: StateFlow<AddBusinessState> = _uiState.asStateFlow()
+
+    private val _categorias = MutableStateFlow<List<CategoriaDto>>(emptyList())
+    val categorias: StateFlow<List<CategoriaDto>> = _categorias.asStateFlow()
+
+    fun loadCategorias() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = negocioRepository.getCategorias()
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = { _categorias.value = it },
+                    onFailure = { /* mantener lista vacía */ }
+                )
+            }
+        }
+    }
+
+    fun createCategoria(nombre: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = negocioRepository.createCategoria(nombre)
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = {
+                        loadCategorias()
+                        onResult(true)
+                    },
+                    onFailure = {
+                        _uiState.value = _uiState.value.copy(error = it.message ?: "Error al crear categoría")
+                        onResult(false)
+                    }
+                )
+            }
+        }
+    }
 
     fun registerBusiness(
         name: String, 

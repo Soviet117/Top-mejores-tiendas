@@ -213,6 +213,23 @@ data class ApiError(
     @SerializedName("details") val details: List<Any>? = null
 )
 
+// ─── Categorias ────────────────────────────────────────────
+
+data class CategoriaDto(
+    @SerializedName("id") val id: Int,
+    @SerializedName("nombre") val nombre: String,
+    @SerializedName("icono") val icono: String,
+    @SerializedName("color") val color: String
+)
+
+data class CategoriasResponse(
+    @SerializedName("categorias") val categorias: List<CategoriaDto>
+)
+
+data class CreateCategoriaRequest(
+    @SerializedName("nombre") val nombre: String
+)
+
 // ─── QR Token ──────────────────────────────────────────────
 
 data class QrTokenResponse(
@@ -227,5 +244,6 @@ data class VerifyQrResponse(
     @SerializedName("autorizado") val autorizado: Boolean,
     @SerializedName("negocioId") val negocioId: Int,
     @SerializedName("nombreNegocio") val nombreNegocio: String,
+    @SerializedName("qrToken") val qrToken: String,
     @SerializedName("mensaje") val mensaje: String
 )

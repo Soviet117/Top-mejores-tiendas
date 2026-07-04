@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { authRoutes } from './routes/authRoutes';
+import { categoriasRoutes } from './routes/categoriasRoutes';
 import { negociosRoutes } from './routes/negociosRoutes';
 import { resenasRoutes } from './routes/resenasRoutes';
 import { reservasRoutes } from './routes/reservasRoutes';
@@ -31,6 +32,7 @@ app.get('/health', (_req: Request, res: Response) => {
 
 // ─── Rutas de la API ─────────────────────────────────────────
 app.use('/api/auth', authRoutes);
+app.use('/api/categorias', categoriasRoutes);
 app.use('/api/negocios', negociosRoutes);
 app.use('/api/resenas', resenasRoutes);
 app.use('/api/reservas', reservasRoutes);

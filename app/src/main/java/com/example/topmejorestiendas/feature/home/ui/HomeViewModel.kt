@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.topmejorestiendas.core.domain.mapper.toDomainModel
 import com.example.topmejorestiendas.core.domain.model.Business
+import com.example.topmejorestiendas.data.remote.dto.CategoriaDto
 import com.example.topmejorestiendas.data.repository.NegocioRepository
 import com.example.topmejorestiendas.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +20,8 @@ import kotlinx.coroutines.withContext
 data class HomeUiState(
     val isLoading: Boolean = true,
     val businesses: List<Business> = emptyList(),
-    val categories: List<String> = listOf("Todo", "Restaurantes", "Canchas Sintéticas", "Piscinas", "Cafeterías", "Gimnasios", "Tiendas de Ropa", "Farmacias", "Supermercados", "Otros"),
+    val categories: List<String> = listOf("Todo"),
+    val rawCategories: List<CategoriaDto> = emptyList(),
     val selectedCategory: String = "Todo",
     val searchQuery: String = "",
     val selectedSortOption: String = "Destacados",
@@ -38,6 +40,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.value = _uiState.value.copy(
             profilePhotoUrl = sessionManager.getProfilePhoto()
         )
+        fetchCategories()
         fetchBusinesses()
     }
 
@@ -71,6 +74,23 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     // Guardamos la lista original (sin filtro de búsqueda por nombre)
     private var originalList: List<Business> = emptyList()
+
+    private fun fetchCategories() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = negocioRepository.getCategorias()
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = { cats ->
+                        _uiState.value = _uiState.value.copy(
+                            categories = listOf("Todo") + cats.map { it.nombre },
+                            rawCategories = cats
+                        )
+                    },
+                    onFailure = { /* mantener hardcodeado por defecto */ }
+                )
+            }
+        }
+    }
 
     private fun fetchBusinesses() {
         viewModelScope.launch(Dispatchers.IO) {
