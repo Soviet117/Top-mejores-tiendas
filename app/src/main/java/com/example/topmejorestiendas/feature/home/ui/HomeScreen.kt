@@ -11,7 +11,6 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.Fastfood
-import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingBag
@@ -163,7 +162,6 @@ fun HomeScreen(
                                         onClick = { viewModel.onCategorySelected(category) }
                                     )
                                 }
-                            }
                             }
                         }
                     }

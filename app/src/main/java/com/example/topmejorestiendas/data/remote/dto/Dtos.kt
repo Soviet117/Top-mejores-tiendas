@@ -247,3 +247,14 @@ data class VerifyQrResponse(
     @SerializedName("qrToken") val qrToken: String,
     @SerializedName("mensaje") val mensaje: String
 )
+
+// ─── Email Verification ──────────────────────────────────────
+
+data class SendVerificationCodeRequest(
+    @SerializedName("email") val email: String
+)
+
+data class SendVerificationCodeResponse(
+    @SerializedName("otpCode") val otpCode: String,
+    @SerializedName("message") val message: String
+)

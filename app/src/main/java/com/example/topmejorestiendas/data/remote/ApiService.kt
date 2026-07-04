@@ -23,6 +23,9 @@ interface ApiService {
     @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
 
+    @POST("api/auth/send-verification-code")
+    suspend fun sendVerificationCode(@Body request: SendVerificationCodeRequest): Response<SendVerificationCodeResponse>
+
     @GET("api/auth/me")
     suspend fun getMe(@Header("Authorization") token: String): Response<MeResponse>
 

@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
+import { sendVerificationCode as sendEmail } from '../services/emailService';
 
 const prisma = new PrismaClient();
 
@@ -244,5 +245,30 @@ export const deleteAccount = async (req: Request & { user?: { id: number } }, re
   } catch (error) {
     console.error('[AUTH] deleteAccount error:', error);
     res.status(500).json({ error: 'Error al eliminar la cuenta' });
+  }
+};
+
+// ─── POST /api/auth/send-verification-code ────────────────────
+const SendCodeSchema = z.object({
+  email: z.string().email('Email inv\u00e1lido'),
+});
+
+export const sendVerificationCodeHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = SendCodeSchema.parse(req.body);
+
+    const otpCode = await sendEmail(email);
+
+    res.status(200).json({
+      message: 'C\u00f3digo enviado a tu correo',
+      otpCode,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Datos inv\u00e1lidos', details: error.errors });
+      return;
+    }
+    console.error('[AUTH] sendVerificationCode error:', error);
+    res.status(500).json({ error: 'Error al enviar el c\u00f3digo de verificaci\u00f3n' });
   }
 };

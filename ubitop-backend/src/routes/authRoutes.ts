@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, getMe, updateProfile, updatePassword, deleteAccount } from '../controllers/authController';
+import { register, login, getMe, updateProfile, updatePassword, deleteAccount, sendVerificationCodeHandler } from '../controllers/authController';
 import { requireAuth } from '../middleware/auth';
 
 export const authRoutes = Router();
@@ -21,3 +21,6 @@ authRoutes.put('/password', requireAuth, updatePassword);
 
 // DELETE /api/auth/account  (eliminar cuenta)
 authRoutes.delete('/account', requireAuth, deleteAccount);
+
+// POST /api/auth/send-verification-code
+authRoutes.post('/send-verification-code', sendVerificationCodeHandler);

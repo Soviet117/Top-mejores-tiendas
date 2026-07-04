@@ -26,12 +26,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        val senderEmail = (localProperties.getProperty("SENDER_EMAIL") ?: "").replace("\"", "")
-        val senderPassword = (localProperties.getProperty("SENDER_PASSWORD") ?: "").replace("\"", "")
         val sunatToken = (localProperties.getProperty("SUNAT_BEARER_TOKEN") ?: "").replace("\"", "")
         
-        buildConfigField("String", "SENDER_EMAIL", "\"$senderEmail\"")
-        buildConfigField("String", "SENDER_PASSWORD", "\"$senderPassword\"")
         buildConfigField("String", "SUNAT_BEARER_TOKEN", "\"$sunatToken\"")
 
         val backendUrl = (localProperties.getProperty("BACKEND_URL") ?: "http://10.0.2.2:3000").replace("\"", "")
@@ -120,9 +116,6 @@ dependencies {
     // Image Cropper
     implementation("com.vanniktech:android-image-cropper:4.6.0")
 
-    // JavaMail for Email Verification
-    implementation("com.sun.mail:android-mail:1.6.7")
-    implementation("com.sun.mail:android-activation:1.6.7")
 
     // Retrofit + OkHttp (red hacia el backend)
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
