@@ -55,9 +55,16 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun checkSession() {
-        // La sesión ahora se valida por presencia del token JWT
         if (authRepository.isLoggedIn()) {
-            _uiState.value = _uiState.value.copy(isLoggedIn = true)
+            val user = User(
+                id = sessionManager.userId,
+                fullName = sessionManager.userName,
+                email = sessionManager.userEmail,
+                phone = "",
+                profilePhotoUrl = sessionManager.profilePhoto,
+                isOwner = sessionManager.isOwner
+            )
+            _uiState.value = _uiState.value.copy(isLoggedIn = true, user = user)
         }
     }
 

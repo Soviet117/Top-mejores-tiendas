@@ -71,9 +71,12 @@ fun AddBusinessScreen(
     var description by remember { mutableStateOf("") }
     var photoUri by remember { mutableStateOf<Uri?>(null) }
 
-    val showPricing = category == "Piscinas" || category == "Canchas Sintéticas"
+    val hasDefaultPricing = category == "Piscinas" || category == "Canchas Sintéticas"
+    var enablePricing by remember { mutableStateOf(false) }
+    LaunchedEffect(category) { enablePricing = false }
+    val showPricing = hasDefaultPricing || (!hasDefaultPricing && enablePricing)
     val priceEntries = remember { mutableStateListOf<PriceEntry>() }
-    LaunchedEffect(category) {
+    LaunchedEffect(showPricing) {
         if (showPricing && priceEntries.isEmpty()) {
             when (category) {
                 "Piscinas" -> {
@@ -102,8 +105,8 @@ fun AddBusinessScreen(
         uri?.let { 
             cropImageLauncher.launch(
                 CropImageContractOptions(it, CropImageOptions(
-                    aspectRatioX = 16,
-                    aspectRatioY = 9,
+                    aspectRatioX = 1,
+                    aspectRatioY = 1,
                     fixAspectRatio = true
                 ))
             )
@@ -362,8 +365,27 @@ fun AddBusinessScreen(
                 minLines = 3
             )
 
+            if (!hasDefaultPricing && category.isNotBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Agregar tarifario",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Switch(
+                        checked = enablePricing,
+                        onCheckedChange = { enablePricing = it }
+                    )
+                }
+            }
+
             if (showPricing) {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Precios",
                     style = MaterialTheme.typography.titleMedium,
@@ -482,6 +504,45 @@ data class PriceEntry(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleRow(state: ScheduleDayState) {
+    var showOpenPicker by remember { mutableStateOf(false) }
+    var showClosePicker by remember { mutableStateOf(false) }
+
+    if (showOpenPicker) {
+        val timeState = rememberTimePickerState(
+            initialHour = state.openTime.value.substringBefore(":").toIntOrNull() ?: 8,
+            initialMinute = state.openTime.value.substringAfter(":").toIntOrNull() ?: 0,
+            is24Hour = true
+        )
+        TimePickerDialog(
+            onDismiss = { showOpenPicker = false },
+            onConfirm = {
+                state.openTime.value = String.format("%02d:%02d", timeState.hour, timeState.minute)
+                showOpenPicker = false
+            },
+            title = "Hora de apertura"
+        ) {
+            TimePicker(state = timeState)
+        }
+    }
+
+    if (showClosePicker) {
+        val timeState = rememberTimePickerState(
+            initialHour = state.closeTime.value.substringBefore(":").toIntOrNull() ?: 18,
+            initialMinute = state.closeTime.value.substringAfter(":").toIntOrNull() ?: 0,
+            is24Hour = true
+        )
+        TimePickerDialog(
+            onDismiss = { showClosePicker = false },
+            onConfirm = {
+                state.closeTime.value = String.format("%02d:%02d", timeState.hour, timeState.minute)
+                showClosePicker = false
+            },
+            title = "Hora de cierre"
+        ) {
+            TimePicker(state = timeState)
+        }
+    }
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
@@ -499,18 +560,38 @@ fun ScheduleRow(state: ScheduleDayState) {
         if (state.isOpen.value) {
             OutlinedTextField(
                 value = state.openTime.value,
-                onValueChange = { state.openTime.value = it },
-                modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                onValueChange = {},
+                readOnly = true,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 4.dp)
+                    .clickable { showOpenPicker = true },
                 singleLine = true,
-                textStyle = MaterialTheme.typography.bodySmall
+                textStyle = MaterialTheme.typography.bodySmall,
+                enabled = false,
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                    disabledBorderColor = MaterialTheme.colorScheme.outline,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             )
             Text("-")
             OutlinedTextField(
                 value = state.closeTime.value,
-                onValueChange = { state.closeTime.value = it },
-                modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                onValueChange = {},
+                readOnly = true,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 4.dp)
+                    .clickable { showClosePicker = true },
                 singleLine = true,
-                textStyle = MaterialTheme.typography.bodySmall
+                textStyle = MaterialTheme.typography.bodySmall,
+                enabled = false,
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                    disabledBorderColor = MaterialTheme.colorScheme.outline,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             )
         } else {
             Text(
@@ -521,4 +602,39 @@ fun ScheduleRow(state: ScheduleDayState) {
             )
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimePickerDialog(
+    title: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Schedule,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(title)
+            }
+        },
+        text = {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                content()
+            }
+        },
+        confirmButton = {
+            Button(onClick = onConfirm) { Text("Aceptar") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
+        }
+    )
 }

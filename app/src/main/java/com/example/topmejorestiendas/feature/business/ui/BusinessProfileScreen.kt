@@ -1,7 +1,9 @@
 package com.example.topmejorestiendas.feature.business.ui
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -334,6 +336,25 @@ fun BusinessProfileScreen(
                                 longitude = business.longitude,
                                 isEditMode = false
                             )
+                            Button(
+                                onClick = {
+                                    val gmmIntentUri = Uri.parse("google.navigation:q=${business.latitude},${business.longitude}")
+                                    val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+                                    mapIntent.setPackage("com.google.android.apps.maps")
+                                    if (mapIntent.resolveActivity(context.packageManager) != null) {
+                                        context.startActivity(mapIntent)
+                                    } else {
+                                        val webUri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=${business.latitude},${business.longitude}")
+                                        context.startActivity(Intent(Intent.ACTION_VIEW, webUri))
+                                    }
+                                },
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(8.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                            ) {
+                                Text("Cómo llegar", style = MaterialTheme.typography.labelMedium)
+                            }
                         }
                     }
 
@@ -668,7 +689,7 @@ fun ReviewCard(review: Resena) {
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "Usuario ${review.idUsuario}", fontWeight = FontWeight.Bold)
+                    Text(text = review.nombreUsuario ?: "Usuario ${review.idUsuario}", fontWeight = FontWeight.Bold)
                     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
                     Text(
                         text = dateFormat.format(Date(review.fecha)),

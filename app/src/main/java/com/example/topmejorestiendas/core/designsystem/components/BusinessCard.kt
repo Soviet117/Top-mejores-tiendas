@@ -27,6 +27,8 @@ fun BusinessCard(
     business: Business,
     onClick: () -> Unit,
     onToggleFavorite: (() -> Unit)? = null,
+    displayRatingLabel: String? = null,
+    displayRating: Double? = null,
     modifier: Modifier = Modifier
 ) {
     ElevatedCard(
@@ -123,8 +125,13 @@ fun BusinessCard(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
+                    val ratingText = if (displayRatingLabel != null && displayRating != null) {
+                        "${String.format("%.1f", displayRating)} ($displayRatingLabel)"
+                    } else {
+                        "${business.rating} (${business.reviewCount})"
+                    }
                     Text(
-                        text = "${business.rating} (${business.reviewCount})",
+                        text = ratingText,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

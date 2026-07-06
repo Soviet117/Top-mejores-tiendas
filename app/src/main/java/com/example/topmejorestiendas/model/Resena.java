@@ -16,6 +16,7 @@ public class Resena {
     public int calidadProductos;
     public int costos;
     public String respuestaDuenio;
+    public String nombreUsuario;
 
     public Resena(int idUsuario, int idNegocio, int calificacion, int calidadAtencion, int calidadProductos, int costos, String comentario, long fecha) {
         this.idUsuario = idUsuario;

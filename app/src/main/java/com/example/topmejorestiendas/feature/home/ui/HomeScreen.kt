@@ -246,10 +246,18 @@ fun HomeScreen(
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 items(uiState.businesses) { business ->
+                                    val (displayLabel, displayValue) = when (uiState.selectedSortOption) {
+                                        "Costo" -> "Costo" to business.ratingCosto
+                                        "Atención" -> "Atención" to business.ratingAtencion
+                                        "Producto" -> "Producto" to business.ratingProducto
+                                        else -> null to null
+                                    }
                                     BusinessCard(
                                         business = business,
                                         onClick = { onNavigateToBusiness(business.id) },
-                                        onToggleFavorite = { viewModel.toggleFavorite(business.id) }
+                                        onToggleFavorite = { viewModel.toggleFavorite(business.id) },
+                                        displayRatingLabel = displayLabel,
+                                        displayRating = displayValue
                                     )
                                 }
                             }

@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 data class BusinessReviewsUiState(
     val isLoading: Boolean = true,
@@ -42,7 +44,7 @@ class BusinessReviewsViewModel(application: Application) : AndroidViewModel(appl
                                 dto.calidadProductos,
                                 dto.costos,
                                 dto.comentario,
-                                0L // Podríamos parsear la fecha si se necesitara
+                                parseFecha(dto.fecha)
                             ).apply {
                                 id = dto.id
                                 respuestaDuenio = dto.respuestaDuenio
@@ -73,6 +75,23 @@ class BusinessReviewsViewModel(application: Application) : AndroidViewModel(appl
             }
         }
     }
+}
+
+private val dateFormats = arrayOf(
+    "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+    "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
+    "yyyy-MM-dd'T'HH:mm:ss",
+    "yyyy-MM-dd"
+)
+
+private fun parseFecha(fechaStr: String?): Long {
+    if (fechaStr.isNullOrBlank()) return 0L
+    for (format in dateFormats) {
+        try {
+            return SimpleDateFormat(format, Locale.US).parse(fechaStr)?.time ?: 0L
+        } catch (_: Exception) { }
+    }
+    return 0L
 }
 
 class BusinessReviewsViewModelFactory(

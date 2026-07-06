@@ -142,9 +142,12 @@ fun EditBusinessScreen(
 
                     val context = LocalContext.current
 
-                    val showPricing = category == "Piscinas" || category == "Canchas Sintéticas"
+                    val hasDefaultPricing = category == "Piscinas" || category == "Canchas Sintéticas"
+                    var enablePricing by remember { mutableStateOf(!negocio.precios.isNullOrBlank() && !hasDefaultPricing) }
+                    LaunchedEffect(category) { enablePricing = false }
+                    val showPricing = hasDefaultPricing || (!hasDefaultPricing && enablePricing)
                     val priceEntries = remember { mutableStateListOf<PriceEntry>() }
-                    LaunchedEffect(negocio.id, category) {
+                    LaunchedEffect(negocio.id, showPricing) {
                         priceEntries.clear()
                         if (showPricing && !negocio.precios.isNullOrBlank()) {
                             negocio.precios!!.split(",").forEach { entry ->
@@ -180,8 +183,8 @@ fun EditBusinessScreen(
                         uri?.let { 
                             cropImageLauncher.launch(
                                 CropImageContractOptions(it, CropImageOptions(
-                                    aspectRatioX = 16,
-                                    aspectRatioY = 9,
+                                    aspectRatioX = 1,
+                                    aspectRatioY = 1,
                                     fixAspectRatio = true
                                 ))
                             )
@@ -418,8 +421,27 @@ fun EditBusinessScreen(
                             minLines = 3
                         )
 
+                        if (!hasDefaultPricing && category.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "Agregar tarifario",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Switch(
+                                    checked = enablePricing,
+                                    onCheckedChange = { enablePricing = it }
+                                )
+                            }
+                        }
+
                         if (showPricing) {
-                            Spacer(modifier = Modifier.height(24.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "Precios",
                                 style = MaterialTheme.typography.titleMedium,

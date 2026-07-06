@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 data class BusinessProfileUiState(
     val isLoading: Boolean = true,
@@ -71,7 +73,7 @@ class BusinessProfileViewModel(
                             dto.calidadProductos,
                             dto.costos,
                             "", // comentario
-                            0L // fecha
+                            0L
                         )
                     }
 
@@ -88,10 +90,11 @@ class BusinessProfileViewModel(
                                 dto.calidadProductos,
                                 dto.costos,
                                 dto.comentario,
-                                0L // fecha
+                                parseFecha(dto.fecha)
                             ).apply { 
                                 id = dto.id
                                 respuestaDuenio = dto.respuestaDuenio
+                                nombreUsuario = dto.usuario?.nombreCompleto ?: "Usuario"
                             }
                         }
                     } else emptyList()
@@ -271,6 +274,23 @@ class BusinessProfileViewModel(
             }
         }
     }
+}
+
+private val dateFormats = arrayOf(
+    "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+    "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
+    "yyyy-MM-dd'T'HH:mm:ss",
+    "yyyy-MM-dd"
+)
+
+private fun parseFecha(fechaStr: String?): Long {
+    if (fechaStr.isNullOrBlank()) return 0L
+    for (format in dateFormats) {
+        try {
+            return SimpleDateFormat(format, Locale.US).parse(fechaStr)?.time ?: 0L
+        } catch (_: Exception) { }
+    }
+    return 0L
 }
 
 class BusinessProfileViewModelFactory(
