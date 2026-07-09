@@ -184,7 +184,19 @@ fun AppNavHost(
                 viewModel = manageBusinessViewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToEditBusiness = { id -> navController.navigate("edit_business/$id") },
-                onNavigateToReviews = { id -> navController.navigate("business_reviews/$id") }
+                onNavigateToReviews = { id -> navController.navigate("business_reviews/$id") },
+                onNavigateToAmbientes = { id -> navController.navigate("manage_ambientes/$id") }
+            )
+        }
+
+        composable("manage_ambientes/{businessId}") { backStackEntry ->
+            val businessId = backStackEntry.arguments?.getString("businessId")?.toIntOrNull() ?: 0
+            val ambientesViewModel: com.example.topmejorestiendas.feature.dashboard.ui.ManageAmbientesViewModel = viewModel(
+                factory = com.example.topmejorestiendas.feature.dashboard.ui.ManageAmbientesViewModelFactory(context, businessId)
+            )
+            com.example.topmejorestiendas.feature.dashboard.ui.ManageAmbientesScreen(
+                viewModel = ambientesViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

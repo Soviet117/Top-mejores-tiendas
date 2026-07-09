@@ -36,7 +36,7 @@ export const getAmbientesDisponibles = async (req: AuthenticatedRequest, res: Re
     }
 
     const ambientes = await prisma.ambiente.findMany({
-      where: { idNegocio },
+      where: { idNegocio, activo: true },
     });
 
     // Para cada ambiente, contar cuántas unidades están ocupadas (excluyendo reservas que ya terminaron)

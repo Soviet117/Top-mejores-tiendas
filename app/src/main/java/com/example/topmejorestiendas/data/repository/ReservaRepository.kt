@@ -3,6 +3,7 @@ package com.example.topmejorestiendas.data.repository
 import android.content.Context
 import com.example.topmejorestiendas.data.remote.RetrofitClient
 import com.example.topmejorestiendas.data.remote.dto.AmbienteDisponibleDto
+import com.example.topmejorestiendas.data.remote.dto.AmbienteEntry
 import com.example.topmejorestiendas.data.remote.dto.AsignarAmbienteRequest
 import com.example.topmejorestiendas.data.remote.dto.CreateReservaRequest
 import com.example.topmejorestiendas.data.remote.dto.ReservaDto
@@ -156,6 +157,48 @@ class ReservaRepository(context: Context) {
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("Error al quitar ambiente (${response.code()})"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Sin conexión. Verifica tu internet."))
+        }
+    }
+
+    /** Obtener todos los ambientes de un negocio (gestión) */
+    suspend fun getAmbientesByNegocio(idNegocio: Int): Result<List<AmbienteEntry>> {
+        return try {
+            val response = api.getAmbientesByNegocio(token, idNegocio)
+            if (response.isSuccessful) {
+                Result.success(response.body()!!.ambientes)
+            } else {
+                Result.failure(Exception("Error al obtener ambientes (${response.code()})"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Sin conexión. Verifica tu internet."))
+        }
+    }
+
+    /** Actualizar nombre, cantidad, capacidad de un ambiente */
+    suspend fun updateAmbiente(id: Int, nombre: String, cantidad: Int, capacidad: Int): Result<Unit> {
+        return try {
+            val response = api.updateAmbiente(token, id, AmbienteEntry(nombre = nombre, cantidad = cantidad, capacidad = capacidad))
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Error al actualizar ambiente (${response.code()})"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Sin conexión. Verifica tu internet."))
+        }
+    }
+
+    /** Activar/desactivar un ambiente */
+    suspend fun toggleAmbiente(id: Int): Result<Unit> {
+        return try {
+            val response = api.toggleAmbiente(token, id)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Error al cambiar estado (${response.code()})"))
             }
         } catch (e: Exception) {
             Result.failure(Exception("Sin conexión. Verifica tu internet."))

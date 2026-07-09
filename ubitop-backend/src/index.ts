@@ -6,6 +6,7 @@ import { categoriasRoutes } from './routes/categoriasRoutes';
 import { negociosRoutes } from './routes/negociosRoutes';
 import { resenasRoutes } from './routes/resenasRoutes';
 import { reservasRoutes } from './routes/reservasRoutes';
+import { ambientesRoutes } from './routes/ambientesRoutes';
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use('/api/categorias', categoriasRoutes);
 app.use('/api/negocios', negociosRoutes);
 app.use('/api/resenas', resenasRoutes);
 app.use('/api/reservas', reservasRoutes);
+app.use('/api/ambientes', ambientesRoutes);
 
 // ─── 404 Handler ─────────────────────────────────────────────
 app.use((_req: Request, res: Response) => {

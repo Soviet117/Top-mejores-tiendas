@@ -194,4 +194,24 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("idReserva") idReserva: Int
     ): Response<MessageResponse>
+
+    // ─── AMBIENTES (gestión) ───────────────────────────────────
+    @GET("api/ambientes/negocio/{idNegocio}")
+    suspend fun getAmbientesByNegocio(
+        @Header("Authorization") token: String,
+        @Path("idNegocio") idNegocio: Int
+    ): Response<AmbientesListResponse>
+
+    @PUT("api/ambientes/{id}")
+    suspend fun updateAmbiente(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Body request: AmbienteEntry
+    ): Response<AmbienteResponse>
+
+    @PATCH("api/ambientes/{id}/toggle")
+    suspend fun toggleAmbiente(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<ToggleAmbienteResponse>
 }

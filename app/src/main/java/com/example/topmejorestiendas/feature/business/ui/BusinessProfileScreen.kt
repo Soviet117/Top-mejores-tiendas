@@ -79,7 +79,8 @@ fun BusinessProfileScreen(
                 .setPrompt("Escanea el QR del local")
                 .setCameraId(0)
                 .setBeepEnabled(false)
-                .setOrientationLocked(true)
+                .setOrientationLocked(false)
+                .setCaptureActivity(CustomScannerActivity::class.java)
             scannerLauncher.launch(options)
         } else {
             Toast.makeText(context, "Permiso de cámara necesario para escanear QR", Toast.LENGTH_SHORT).show()
