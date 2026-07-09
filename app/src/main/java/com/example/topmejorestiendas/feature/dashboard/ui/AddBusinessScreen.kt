@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Store
 import androidx.compose.material.icons.filled.Delete
@@ -36,6 +37,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.topmejorestiendas.feature.common.ui.OsmMap
@@ -76,6 +78,10 @@ fun AddBusinessScreen(
     LaunchedEffect(category) { enablePricing = false }
     val showPricing = hasDefaultPricing || (!hasDefaultPricing && enablePricing)
     val priceEntries = remember { mutableStateListOf<PriceEntry>() }
+
+    var isAmbienteMode by remember { mutableStateOf(false) }
+    val ambienteEntries = remember { mutableStateListOf<AmbienteEntry>() }
+    var aforoCapacidad by remember { mutableStateOf("") }
     LaunchedEffect(showPricing) {
         if (showPricing && priceEntries.isEmpty()) {
             when (category) {
@@ -365,6 +371,120 @@ fun AddBusinessScreen(
                 minLines = 3
             )
 
+            // ── Switch Ambiente / Aforo ─────────────────────────
+            if (category.isNotBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Ambiente / Aforo",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Switch(
+                        checked = isAmbienteMode,
+                        onCheckedChange = { isAmbienteMode = it; ambienteEntries.clear() }
+                    )
+                }
+            }
+
+            // ── UI de Ambientes o Aforo ─────────────────────────
+            if (isAmbienteMode) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Ambientes",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        ambienteEntries.forEachIndexed { index, entry ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = entry.nombre,
+                                    onValueChange = { ambienteEntries[index] = entry.copy(nombre = it) },
+                                    label = { Text("Nombre") },
+                                    modifier = Modifier.weight(1f).padding(end = 4.dp),
+                                    singleLine = true
+                                )
+                                OutlinedTextField(
+                                    value = entry.cantidad,
+                                    onValueChange = { if (it.all { c -> c.isDigit() }) ambienteEntries[index] = entry.copy(cantidad = it) },
+                                    label = { Text("Cant.") },
+                                    modifier = Modifier.width(70.dp).padding(end = 4.dp),
+                                    singleLine = true,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                )
+                                OutlinedTextField(
+                                    value = entry.capacidad,
+                                    onValueChange = { if (it.all { c -> c.isDigit() }) ambienteEntries[index] = entry.copy(capacidad = it) },
+                                    label = { Text("Cap.") },
+                                    modifier = Modifier.width(70.dp).padding(end = 4.dp),
+                                    singleLine = true,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                )
+                                if (ambienteEntries.size > 1) {
+                                    IconButton(onClick = { ambienteEntries.removeAt(index) }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = "Eliminar",
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = { ambienteEntries.add(AmbienteEntry("", "1", "1")) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Agregar otro ambiente")
+                        }
+                    }
+                }
+            } else if (category.isNotBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Aforo",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        OutlinedTextField(
+                            value = aforoCapacidad,
+                            onValueChange = { if (it.all { c -> c.isDigit() }) aforoCapacidad = it },
+                            label = { Text("Capacidad del aforo") },
+                            leadingIcon = {
+                                Icon(Icons.Filled.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                    }
+                }
+            }
+
             if (!hasDefaultPricing && category.isNotBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
@@ -466,8 +586,16 @@ fun AddBusinessScreen(
                     val finalPrices = priceEntries
                         .filter { it.concept.isNotBlank() && it.price.isNotBlank() }
                         .joinToString(", ") { "${it.concept}: ${it.price}" }
+                    val finalAmbientes = if (isAmbienteMode) {
+                        ambienteEntries
+                            .filter { it.nombre.isNotBlank() && it.capacidad.isNotBlank() }
+                            .map { it.nombre to "${it.cantidad.toIntOrNull() ?: 1}_${it.capacidad.toIntOrNull() ?: 1}" }
+                            .joinToString(", ") { "${it.first}: ${it.second}" }
+                    } else if (aforoCapacidad.isNotBlank()) {
+                        "aforo: 1_${aforoCapacidad}"
+                    } else ""
                     viewModel.registerBusiness(
-                        name, category, address, finalSchedule, description, photoUri?.toString() ?: "", latitude, longitude, finalPrices
+                        name, category, address, finalSchedule, description, photoUri?.toString() ?: "", latitude, longitude, finalPrices, finalAmbientes
                     )
                 },
                 modifier = Modifier

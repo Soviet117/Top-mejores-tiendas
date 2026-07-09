@@ -64,6 +64,7 @@ model Negocio {
   resenas   Resena[]
   reservas  Reserva[]
   qrAccess QrAccess[]
+  ambientes Ambiente[]
 
   @@map("negocios")
 }
@@ -109,6 +110,22 @@ model Reserva {
   usuario  Usuario @relation(fields: [idUsuario], references: [id], onDelete: Cascade)
 
   @@map("reservas")
+}
+
+// ============================================================
+//  AMBIENTES
+// ============================================================
+model Ambiente {
+  id        Int    @id @default(autoincrement())
+  idNegocio Int
+  nombre    String // nombre del ambiente (o "aforo")
+  cantidad  Int    @default(1) // cantidad de unidades
+  capacidad Int    // capacidad por unidad
+
+  // Relaciones
+  negocio Negocio @relation(fields: [idNegocio], references: [id], onDelete: Cascade)
+
+  @@map("ambientes")
 }
 
 // ============================================================

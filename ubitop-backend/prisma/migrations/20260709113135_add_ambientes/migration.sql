@@ -1,0 +1,1 @@
+CREATE TABLE "ambientes" ( "id" SERIAL NOT NULL, "idNegocio" INTEGER NOT NULL, "nombre" TEXT NOT NULL, "cantidad" INTEGER NOT NULL DEFAULT 1, "capacidad" INTEGER NOT NULL, CONSTRAINT "ambientes_pkey" PRIMARY KEY ("id") ); ALTER TABLE "ambientes" ADD CONSTRAINT "ambientes_idNegocio_fkey" FOREIGN KEY ("idNegocio") REFERENCES "negocios"("id") ON DELETE CASCADE ON UPDATE CASCADE;

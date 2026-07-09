@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.topmejorestiendas.data.remote.dto.AmbienteRequestDto
 import com.example.topmejorestiendas.data.remote.dto.CategoriaDto
 import com.example.topmejorestiendas.data.remote.dto.CreateNegocioRequest
 import com.example.topmejorestiendas.data.repository.NegocioRepository
@@ -71,7 +72,8 @@ class AddBusinessViewModel(application: Application) : AndroidViewModel(applicat
         photoUri: String,
         latitude: Double = 0.0,
         longitude: Double = 0.0,
-        prices: String = ""
+        prices: String = "",
+        ambientesStr: String = ""
     ) {
         if (name.isBlank() || category.isBlank() || address.isBlank()) {
             _uiState.value = _uiState.value.copy(error = "Nombre, Categoría y Dirección son obligatorios.")
@@ -86,6 +88,22 @@ class AddBusinessViewModel(application: Application) : AndroidViewModel(applicat
             return
         }
 
+        val ambientesList = if (ambientesStr.isNotBlank()) {
+            ambientesStr.split(", ").mapNotNull { entry ->
+                val parts = entry.split(": ")
+                if (parts.size == 2) {
+                    val nums = parts[1].split("_")
+                    if (nums.size == 2) {
+                        AmbienteRequestDto(
+                            nombre = parts[0],
+                            cantidad = nums[0].toIntOrNull() ?: 1,
+                            capacidad = nums[1].toIntOrNull() ?: 1
+                        )
+                    } else null
+                } else null
+            }.takeIf { it.isNotEmpty() }
+        } else null
+
         viewModelScope.launch(Dispatchers.IO) {
             val request = CreateNegocioRequest(
                 nombreNegocio = name,
@@ -96,7 +114,8 @@ class AddBusinessViewModel(application: Application) : AndroidViewModel(applicat
                 longitud = longitude.takeIf { it != 0.0 },
                 descripcion = description.ifBlank { null },
                 precios = prices.ifBlank { null },
-                fotoNegocioBase64 = com.example.topmejorestiendas.utils.ImageUtils.uriToBase64(getApplication(), photoUri)
+                fotoNegocioBase64 = com.example.topmejorestiendas.utils.ImageUtils.uriToBase64(getApplication(), photoUri),
+                ambientes = ambientesList
             )
             
             val result = negocioRepository.createNegocio(request)
