@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.EventSeat
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.RateReview
 import androidx.compose.material3.*
@@ -24,7 +25,8 @@ fun ManageBusinessScreen(
     viewModel: ManageBusinessViewModel,
     onNavigateBack: () -> Unit,
     onNavigateToEditBusiness: (String) -> Unit,
-    onNavigateToReviews: (String) -> Unit
+    onNavigateToReviews: (String) -> Unit,
+    onNavigateToAmbientes: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val extraState by viewModel.extraState.collectAsState()
@@ -129,6 +131,30 @@ fun ManageBusinessScreen(
                                 Column {
                                     Text("Gestionar Reseñas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                                     Text("Lee y responde a tus clientes.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Card(
+                            onClick = { onNavigateToAmbientes(businessId) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.EventSeat, contentDescription = null, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.primary)
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text("Gestionar Ambientes", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                    Text("Administra ambientes, aforo y disponibilidad.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                         }

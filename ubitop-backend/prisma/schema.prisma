@@ -125,6 +125,7 @@ model Ambiente {
   nombre    String // "aforo" o nombre del ambiente
   cantidad  Int    // 1 para aforo, N para ambientes
   capacidad Int    // Capacidad por unidad
+  activo    Boolean @default(true) // false = en reposo, no asignable
 
   negocio Negocio  @relation(fields: [idNegocio], references: [id], onDelete: Cascade)
   reservas Reserva[]

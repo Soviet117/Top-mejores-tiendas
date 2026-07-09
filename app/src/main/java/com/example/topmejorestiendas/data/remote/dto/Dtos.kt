@@ -212,9 +212,24 @@ data class PendingCountResponse(
 // ─── Ambientes ────────────────────────────────────────────
 
 data class AmbienteEntry(
+    @SerializedName("id") val id: Int? = null,
     @SerializedName("nombre") val nombre: String,
     @SerializedName("cantidad") val cantidad: Int,
-    @SerializedName("capacidad") val capacidad: Int
+    @SerializedName("capacidad") val capacidad: Int,
+    @SerializedName("activo") val activo: Boolean? = null
+)
+
+data class AmbienteResponse(
+    @SerializedName("ambiente") val ambiente: AmbienteEntry
+)
+
+data class AmbientesListResponse(
+    @SerializedName("ambientes") val ambientes: List<AmbienteEntry>
+)
+
+data class ToggleAmbienteResponse(
+    @SerializedName("message") val message: String,
+    @SerializedName("ambiente") val ambiente: AmbienteEntry
 )
 
 // ─── Ambientes Disponibles ───────────────────────────────────
