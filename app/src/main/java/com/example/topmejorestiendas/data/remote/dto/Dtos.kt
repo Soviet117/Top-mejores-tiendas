@@ -75,6 +75,7 @@ data class NegocioDto(
     @SerializedName("fotoNegocio") val fotoNegocio: String?,
     @SerializedName("descripcion") val descripcion: String?,
     @SerializedName("precios") val precios: String?,
+    @SerializedName("ambientes") val ambientes: List<AmbienteEntry>? = null,
     @SerializedName("idDuenio") val idDuenio: Int,
     @SerializedName("resenas") val resenas: List<ResenaSimpleDto>? = null,
     @SerializedName("duenio") val duenio: DuenioSimpleDto? = null
@@ -103,6 +104,7 @@ data class CreateNegocioRequest(
     @SerializedName("longitud") val longitud: Double? = null,
     @SerializedName("descripcion") val descripcion: String? = null,
     @SerializedName("precios") val precios: String? = null,
+    @SerializedName("ambientes") val ambientes: String? = null,
     @SerializedName("fotoNegocioBase64") val fotoNegocioBase64: String? = null
 )
 
@@ -202,6 +204,14 @@ data class UpdateEstadoRequest(
 
 data class PendingCountResponse(
     @SerializedName("count") val count: Int
+)
+
+// ─── Ambientes ────────────────────────────────────────────
+
+data class AmbienteEntry(
+    @SerializedName("nombre") val nombre: String,
+    @SerializedName("cantidad") val cantidad: Int,
+    @SerializedName("capacidad") val capacidad: Int
 )
 
 // ─── Generic ───────────────────────────────────────────────

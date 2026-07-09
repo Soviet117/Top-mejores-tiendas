@@ -71,7 +71,8 @@ class AddBusinessViewModel(application: Application) : AndroidViewModel(applicat
         photoUri: String,
         latitude: Double = 0.0,
         longitude: Double = 0.0,
-        prices: String = ""
+        prices: String = "",
+        ambientes: String = ""
     ) {
         if (name.isBlank() || category.isBlank() || address.isBlank()) {
             _uiState.value = _uiState.value.copy(error = "Nombre, Categoría y Dirección son obligatorios.")
@@ -96,6 +97,7 @@ class AddBusinessViewModel(application: Application) : AndroidViewModel(applicat
                 longitud = longitude.takeIf { it != 0.0 },
                 descripcion = description.ifBlank { null },
                 precios = prices.ifBlank { null },
+                ambientes = ambientes.ifBlank { null },
                 fotoNegocioBase64 = com.example.topmejorestiendas.utils.ImageUtils.uriToBase64(getApplication(), photoUri)
             )
             

@@ -18,6 +18,7 @@ public class Negocio {
     public String descripcion;
     public int idDuenio;
     public String precios;
+    public String ambientes;
 
     public Negocio(String nombreNegocio, String rubro, String direccion, String horario, String fotoNegocio, String descripcion, int idDuenio) {
         this.nombreNegocio = nombreNegocio;
@@ -29,5 +30,6 @@ public class Negocio {
         this.idDuenio = idDuenio;
         this.calificacionPromedio = 0;
         this.precios = null;
+        this.ambientes = null;
     }
 }

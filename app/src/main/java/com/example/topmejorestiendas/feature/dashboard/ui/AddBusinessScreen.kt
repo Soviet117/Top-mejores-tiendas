@@ -36,6 +36,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.topmejorestiendas.feature.common.ui.OsmMap
@@ -74,6 +75,16 @@ fun AddBusinessScreen(
     val hasDefaultPricing = category == "Piscinas" || category == "Canchas Sintéticas"
     var enablePricing by remember { mutableStateOf(false) }
     LaunchedEffect(category) { enablePricing = false }
+
+    var esAmbientes by remember { mutableStateOf(true) }
+    val ambienteEntries = remember { mutableStateListOf(AmbienteEntryUI("", "", "")) }
+    var aforoCapacidad by remember { mutableStateOf("") }
+    LaunchedEffect(category) {
+        esAmbientes = true
+        ambienteEntries.clear()
+        ambienteEntries.add(AmbienteEntryUI("", "", ""))
+        aforoCapacidad = ""
+    }
     val showPricing = hasDefaultPricing || (!hasDefaultPricing && enablePricing)
     val priceEntries = remember { mutableStateListOf<PriceEntry>() }
     LaunchedEffect(showPricing) {
@@ -365,6 +376,98 @@ fun AddBusinessScreen(
                 minLines = 3
             )
 
+            // ── Switch Ambiente / Aforo ────────────────────────────
+            if (category.isNotBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = if (esAmbientes) "Ambientes" else "Aforo",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Switch(
+                        checked = esAmbientes,
+                        onCheckedChange = { esAmbientes = it }
+                    )
+                }
+
+                if (esAmbientes) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Ambientes",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.align(Alignment.Start)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            ambienteEntries.forEachIndexed { index, entry ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                                ) {
+                                    OutlinedTextField(
+                                        value = entry.nombre,
+                                        onValueChange = { ambienteEntries[index] = entry.copy(nombre = it) },
+                                        label = { Text("Nombre") },
+                                        modifier = Modifier.weight(1f).padding(end = 4.dp),
+                                        singleLine = true
+                                    )
+                                    OutlinedTextField(
+                                        value = entry.cantidad,
+                                        onValueChange = { if (it.all { c -> c.isDigit() }) ambienteEntries[index] = entry.copy(cantidad = it) },
+                                        label = { Text("Cantidad") },
+                                        modifier = Modifier.weight(0.7f).padding(horizontal = 4.dp),
+                                        singleLine = true,
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                    )
+                                    OutlinedTextField(
+                                        value = entry.capacidad,
+                                        onValueChange = { if (it.all { c -> c.isDigit() }) ambienteEntries[index] = entry.copy(capacidad = it) },
+                                        label = { Text("Capacidad") },
+                                        modifier = Modifier.weight(0.7f).padding(horizontal = 4.dp),
+                                        singleLine = true,
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                    )
+                                    if (ambienteEntries.size > 1) {
+                                        IconButton(onClick = { ambienteEntries.removeAt(index) }) {
+                                            Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
+                                        }
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            OutlinedButton(
+                                onClick = { ambienteEntries.add(AmbienteEntryUI("", "", "")) },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Agregar otro ambiente")
+                            }
+                        }
+                    }
+                } else {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = aforoCapacidad,
+                        onValueChange = { if (it.all { c -> c.isDigit() }) aforoCapacidad = it },
+                        label = { Text("Capacidad del aforo") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                }
+            }
+
             if (!hasDefaultPricing && category.isNotBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
@@ -466,8 +569,16 @@ fun AddBusinessScreen(
                     val finalPrices = priceEntries
                         .filter { it.concept.isNotBlank() && it.price.isNotBlank() }
                         .joinToString(", ") { "${it.concept}: ${it.price}" }
+                    val finalAmbientes = if (esAmbientes) {
+                        ambienteEntries
+                            .filter { it.nombre.isNotBlank() && it.cantidad.isNotBlank() && it.capacidad.isNotBlank() }
+                            .map { """{"nombre":"${it.nombre}","cantidad":${it.cantidad},"capacidad":${it.capacidad}}""" }
+                            .joinToString(",", "[", "]")
+                    } else if (aforoCapacidad.isNotBlank()) {
+                        """[{"nombre":"aforo","cantidad":1,"capacidad":$aforoCapacidad}]"""
+                    } else ""
                     viewModel.registerBusiness(
-                        name, category, address, finalSchedule, description, photoUri?.toString() ?: "", latitude, longitude, finalPrices
+                        name, category, address, finalSchedule, description, photoUri?.toString() ?: "", latitude, longitude, finalPrices, finalAmbientes
                     )
                 },
                 modifier = Modifier
@@ -499,6 +610,12 @@ data class ScheduleDayState(
 data class PriceEntry(
     val concept: String,
     val price: String
+)
+
+data class AmbienteEntryUI(
+    val nombre: String,
+    val cantidad: String,
+    val capacidad: String
 )
 
 @OptIn(ExperimentalMaterial3Api::class)

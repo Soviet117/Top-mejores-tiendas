@@ -15,6 +15,7 @@ const CreateNegocioSchema = z.object({
   longitud: z.number().optional(),
   descripcion: z.string().optional(),
   precios: z.string().optional(),       // JSON string
+  ambientes: z.string().optional(),     // JSON string
   fotoNegocioBase64: z.string().optional(), // Imagen en base64
 });
 
@@ -41,6 +42,7 @@ export const getNegocios = async (req: AuthenticatedRequest, res: Response): Pro
             costos: true,
           },
         },
+        ambientes: true,
       },
     });
 
@@ -68,6 +70,7 @@ export const getNegocioById = async (req: AuthenticatedRequest, res: Response): 
           },
           orderBy: { fecha: 'desc' },
         },
+        ambientes: true,
       },
     });
 
@@ -87,6 +90,14 @@ export const getNegocioById = async (req: AuthenticatedRequest, res: Response): 
 export const createNegocio = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const data = CreateNegocioSchema.parse(req.body);
+
+    let ambientesData: { nombre: string; cantidad: number; capacidad: number }[] = [];
+    if (data.ambientes) {
+      try {
+        ambientesData = JSON.parse(data.ambientes);
+      } catch { /* invalid JSON, ignorar */ }
+    }
+
     const negocio = await prisma.negocio.create({
       data: {
         nombreNegocio: data.nombreNegocio,
@@ -99,7 +110,11 @@ export const createNegocio = async (req: AuthenticatedRequest, res: Response): P
         precios: data.precios,
         fotoNegocio: data.fotoNegocioBase64,
         idDuenio: req.user!.id,
+        ambientes: {
+          create: ambientesData,
+        },
       },
+      include: { ambientes: true },
     });
 
     res.status(201).json({ message: 'Negocio creado exitosamente', negocio });
@@ -126,6 +141,13 @@ export const updateNegocio = async (req: AuthenticatedRequest, res: Response): P
       return;
     }
 
+    let ambientesData: { nombre: string; cantidad: number; capacidad: number }[] = [];
+    if (data.ambientes) {
+      try {
+        ambientesData = JSON.parse(data.ambientes);
+      } catch { /* invalid JSON, ignorar */ }
+    }
+
     const updated = await prisma.negocio.update({
       where: { id },
       data: {
@@ -138,7 +160,14 @@ export const updateNegocio = async (req: AuthenticatedRequest, res: Response): P
         descripcion: data.descripcion,
         precios: data.precios,
         ...(data.fotoNegocioBase64 ? { fotoNegocio: data.fotoNegocioBase64 } : {}),
+        ...(data.ambientes !== undefined ? {
+          ambientes: {
+            deleteMany: {},
+            create: ambientesData,
+          },
+        } : {}),
       },
+      include: { ambientes: true },
     });
 
     res.status(200).json({ message: 'Negocio actualizado', negocio: updated });
@@ -179,6 +208,7 @@ export const getMisNegocios = async (req: AuthenticatedRequest, res: Response): 
       where: { idDuenio: req.user!.id },
       include: {
         resenas: { select: { calificacion: true } },
+        ambientes: true,
       },
       orderBy: { createdAt: 'desc' },
     });
