@@ -1,0 +1,1 @@
+ALTER TABLE "reservas" ADD COLUMN "personas" INTEGER NOT NULL DEFAULT 1;

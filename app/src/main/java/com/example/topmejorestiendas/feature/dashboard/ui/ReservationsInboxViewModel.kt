@@ -49,8 +49,9 @@ class ReservationsInboxViewModel(application: Application) : AndroidViewModel(ap
                                 dto.fecha,
                                 dto.horaInicio,
                                 dto.horaFin,
+                                dto.personas,
                                 dto.estado,
-                                0L // or parse if needed
+                                0L
                             ).apply { id = dto.id }
                             
                             ReservaConDetalle().apply {

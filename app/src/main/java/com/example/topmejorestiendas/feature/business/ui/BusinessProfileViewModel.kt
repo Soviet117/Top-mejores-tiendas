@@ -246,7 +246,7 @@ class BusinessProfileViewModel(
         }
     }
 
-    fun createReservation(fecha: String, horaInicio: String, horaFin: String, onResult: (Boolean, String) -> Unit) {
+    fun createReservation(fecha: String, horaInicio: String, horaFin: String, personas: Int = 1, onResult: (Boolean, String) -> Unit) {
         val bId = businessId.toIntOrNull()
         if (bId == null) {
             onResult(false, "ID de negocio inválido")
@@ -263,7 +263,8 @@ class BusinessProfileViewModel(
                 idNegocio = bId,
                 fecha = fecha,
                 horaInicio = horaInicio,
-                horaFin = horaFin
+                horaFin = horaFin,
+                personas = personas
             )
             
             withContext(Dispatchers.Main) {

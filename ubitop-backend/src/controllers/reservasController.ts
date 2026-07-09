@@ -10,6 +10,7 @@ const CreateReservaSchema = z.object({
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD)'),
   horaInicio: z.string().regex(/^\d{2}:\d{2}$/, 'Formato de hora inválido (HH:MM)'),
   horaFin: z.string().regex(/^\d{2}:\d{2}$/, 'Formato de hora inválido (HH:MM)'),
+  personas: z.number().int().positive().optional(),
 });
 
 const UpdateEstadoSchema = z.object({
@@ -138,6 +139,7 @@ export const createReserva = async (req: AuthenticatedRequest, res: Response): P
         fecha: data.fecha,
         horaInicio: data.horaInicio,
         horaFin: data.horaFin,
+        personas: data.personas ?? 1,
         estado: 'PENDIENTE',
       },
       include: {

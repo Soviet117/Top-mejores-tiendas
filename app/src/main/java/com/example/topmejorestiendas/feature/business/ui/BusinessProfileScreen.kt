@@ -24,6 +24,8 @@ import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -416,8 +418,8 @@ fun BusinessProfileScreen(
         if (showReservationDialog) {
             ReservationDialog(
                 onDismiss = { showReservationDialog = false },
-                onSubmit = { fecha, horaInicio, horaFin ->
-                    viewModel.createReservation(fecha, horaInicio, horaFin) { success, message ->
+                onSubmit = { fecha, horaInicio, horaFin, personas ->
+                    viewModel.createReservation(fecha, horaInicio, horaFin, personas) { success, message ->
                         coroutineScope.launch {
                             snackbarHostState.showSnackbar(
                                 message = message,
@@ -436,7 +438,7 @@ fun BusinessProfileScreen(
 @Composable
 fun ReservationDialog(
     onDismiss: () -> Unit,
-    onSubmit: (String, String, String) -> Unit
+    onSubmit: (String, String, String, Int) -> Unit
 ) {
     // ── Estado interno ────────────────────────────────────────────
     val calendar = remember { Calendar.getInstance() }
@@ -460,6 +462,9 @@ fun ReservationDialog(
     )
     var showTimePickerInicio by remember { mutableStateOf(false) }
     var showTimePickerFin by remember { mutableStateOf(false) }
+
+    // Cantidad de personas
+    var personas by remember { mutableStateOf("1") }
 
     // ── Formateo de valores legibles ──────────────────────────────
     val fechaDisplay = remember(datePickerState.selectedDateMillis) {
@@ -610,6 +615,19 @@ fun ReservationDialog(
                     )
                 }
 
+                // Cantidad de personas
+                OutlinedTextField(
+                    value = personas,
+                    onValueChange = { if (it.all { c -> c.isDigit() } && it.length <= 4) personas = it },
+                    label = { Text("Reserva para") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Person, contentDescription = "Personas", tint = MaterialTheme.colorScheme.primary)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
+                )
+
                 if (!isValid && fechaApi.isNotBlank()) {
                     Text(
                         "La hora de fin debe ser posterior a la hora de inicio.",
@@ -621,8 +639,8 @@ fun ReservationDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onSubmit(fechaApi, horaInicioDisplay, horaFinDisplay) },
-                enabled = isValid
+                onClick = { onSubmit(fechaApi, horaInicioDisplay, horaFinDisplay, personas.toIntOrNull() ?: 1) },
+                enabled = isValid && (personas.toIntOrNull() ?: 0) > 0
             ) {
                 Text("Solicitar Reserva")
             }
