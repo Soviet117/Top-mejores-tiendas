@@ -52,11 +52,17 @@ class ReservationsInboxViewModel(application: Application) : AndroidViewModel(ap
                                 dto.personas,
                                 dto.estado,
                                 0L
-                            ).apply { id = dto.id }
+                            ).apply {
+                                id = dto.id
+                                nombreAmbiente = dto.nombreAmbiente
+                                idAmbiente = dto.idAmbiente
+                                unidadNumero = dto.unidadNumero
+                            }
                             
                             ReservaConDetalle().apply {
                                 this.reserva = localReserva
                                 this.nombreCliente = dto.usuario?.nombreCompleto ?: "Desconocido"
+                                this.emailCliente = dto.usuario?.email
                                 this.telefonoCliente = dto.usuario?.telefono
                                 this.nombreNegocio = dto.negocio?.nombreNegocio ?: "Desconocido"
                             }

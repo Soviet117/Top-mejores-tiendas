@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -144,9 +145,35 @@ fun AppNavHost(
 
         composable("reservations_inbox") {
             val inboxViewModel: com.example.topmejorestiendas.feature.dashboard.ui.ReservationsInboxViewModel = viewModel(factory = com.example.topmejorestiendas.feature.dashboard.ui.ReservationsInboxViewModelFactory(context))
+            val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+            val refreshInbox = savedStateHandle?.get<Boolean>("refresh_inbox") == true
+            LaunchedEffect(refreshInbox) {
+                if (refreshInbox) {
+                    inboxViewModel.loadReservations()
+                    savedStateHandle?.remove<Boolean>("refresh_inbox")
+                }
+            }
             com.example.topmejorestiendas.feature.dashboard.ui.ReservationsInboxScreen(
                 viewModel = inboxViewModel,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToAsignarAmbiente = { idNegocio, idReserva ->
+                    navController.navigate("asignar_ambiente/$idNegocio/$idReserva")
+                }
+            )
+        }
+
+        composable("asignar_ambiente/{idNegocio}/{idReserva}") { backStackEntry ->
+            val idNegocio = backStackEntry.arguments?.getString("idNegocio")?.toIntOrNull() ?: 0
+            val idReserva = backStackEntry.arguments?.getString("idReserva")?.toIntOrNull() ?: 0
+            val asignarViewModel: com.example.topmejorestiendas.feature.dashboard.ui.AsignarAmbienteViewModel = viewModel(
+                factory = com.example.topmejorestiendas.feature.dashboard.ui.AsignarAmbienteViewModelFactory(context, idNegocio, idReserva)
+            )
+            com.example.topmejorestiendas.feature.dashboard.ui.AsignarAmbienteScreen(
+                viewModel = asignarViewModel,
+                onNavigateBack = {
+                    navController.previousBackStackEntry?.savedStateHandle?.set("refresh_inbox", true)
+                    navController.popBackStack()
+                }
             )
         }
 

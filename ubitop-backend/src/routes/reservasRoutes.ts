@@ -6,6 +6,9 @@ import {
   createReserva,
   updateEstadoReserva,
   cancelarReserva,
+  getAmbientesDisponibles,
+  asignarAmbiente,
+  quitarAmbiente,
 } from '../controllers/reservasController';
 import { requireAuth, requireOwner } from '../middleware/auth';
 
@@ -28,3 +31,9 @@ reservasRoutes.patch('/:id/estado', requireAuth, requireOwner, updateEstadoReser
 
 // DELETE /api/reservas/:id  (cancelar reserva propia, cliente)
 reservasRoutes.delete('/:id', requireAuth, cancelarReserva);
+
+// POST /api/reservas/:idReserva/asignar-ambiente  (asignar ambiente a reserva, solo dueño)
+reservasRoutes.post('/:idReserva/asignar-ambiente', requireAuth, requireOwner, asignarAmbiente);
+
+// DELETE /api/reservas/:idReserva/quitar-ambiente  (quitar ambiente de reserva, solo dueño)
+reservasRoutes.delete('/:idReserva/quitar-ambiente', requireAuth, requireOwner, quitarAmbiente);

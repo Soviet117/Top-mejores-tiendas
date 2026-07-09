@@ -2,6 +2,8 @@ package com.example.topmejorestiendas.data.repository
 
 import android.content.Context
 import com.example.topmejorestiendas.data.remote.RetrofitClient
+import com.example.topmejorestiendas.data.remote.dto.AmbienteDisponibleDto
+import com.example.topmejorestiendas.data.remote.dto.AsignarAmbienteRequest
 import com.example.topmejorestiendas.data.remote.dto.CreateReservaRequest
 import com.example.topmejorestiendas.data.remote.dto.ReservaDto
 import com.example.topmejorestiendas.data.remote.dto.UpdateEstadoRequest
@@ -111,6 +113,49 @@ class ReservaRepository(context: Context) {
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("Error al cancelar la reserva (${response.code()})"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Sin conexión. Verifica tu internet."))
+        }
+    }
+
+    /** Obtener ambientes con cuentas de unidades libres para un negocio */
+    suspend fun getAmbientesDisponibles(idNegocio: Int): Result<List<AmbienteDisponibleDto>> {
+        return try {
+            val response = api.getAmbientesDisponibles(token, idNegocio)
+            if (response.isSuccessful) {
+                Result.success(response.body()!!.ambientes)
+            } else {
+                Result.failure(Exception("Error al obtener ambientes (${response.code()})"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Sin conexión. Verifica tu internet."))
+        }
+    }
+
+    /** Asignar un ambiente a una reserva */
+    suspend fun asignarAmbiente(reservaId: Int, idAmbiente: Int, unidadNumero: Int): Result<Unit> {
+        return try {
+            val response = api.asignarAmbiente(token, reservaId, AsignarAmbienteRequest(idAmbiente, unidadNumero))
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                val errorBody = response.errorBody()?.string() ?: "Error al asignar ambiente"
+                Result.failure(Exception(errorBody))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Sin conexión. Verifica tu internet."))
+        }
+    }
+
+    /** Quitar ambiente asignado a una reserva */
+    suspend fun quitarAmbiente(reservaId: Int): Result<Unit> {
+        return try {
+            val response = api.quitarAmbiente(token, reservaId)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Error al quitar ambiente (${response.code()})"))
             }
         } catch (e: Exception) {
             Result.failure(Exception("Sin conexión. Verifica tu internet."))

@@ -104,10 +104,14 @@ model Reserva {
   personas     Int      @default(1) // Cantidad de personas para la reserva
   estado       String   @default("PENDIENTE") // PENDIENTE | CONFIRMADA | RECHAZADA | CANCELADA
   fechaCreacion DateTime @default(now())
+  idAmbiente   Int?     // Ambiente asignado (etapa 2)
+  unidadNumero Int?     // Número de unidad del ambiente asignado
+  nombreAmbiente String? // Nombre del ambiente asignado (denormalizado)
 
   // Relaciones
   negocio  Negocio @relation(fields: [idNegocio], references: [id], onDelete: Cascade)
-  usuario  Usuario @relation(fields: [idUsuario], references: [id], onDelete: Cascade)
+  usuario  Usuario   @relation(fields: [idUsuario], references: [id], onDelete: Cascade)
+  ambiente Ambiente? @relation(fields: [idAmbiente], references: [id], onDelete: SetNull)
 
   @@map("reservas")
 }
@@ -122,7 +126,8 @@ model Ambiente {
   cantidad  Int    // 1 para aforo, N para ambientes
   capacidad Int    // Capacidad por unidad
 
-  negocio Negocio @relation(fields: [idNegocio], references: [id], onDelete: Cascade)
+  negocio Negocio  @relation(fields: [idNegocio], references: [id], onDelete: Cascade)
+  reservas Reserva[]
 
   @@map("ambientes")
 }

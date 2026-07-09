@@ -174,4 +174,24 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Response<MessageResponse>
+
+    // ─── AMBIENTE-ASIGNACION ──────────────────────────────────
+    @GET("api/negocios/{idNegocio}/ambientes-disponibles")
+    suspend fun getAmbientesDisponibles(
+        @Header("Authorization") token: String,
+        @Path("idNegocio") idNegocio: Int
+    ): Response<AmbientesDisponiblesResponse>
+
+    @POST("api/reservas/{idReserva}/asignar-ambiente")
+    suspend fun asignarAmbiente(
+        @Header("Authorization") token: String,
+        @Path("idReserva") idReserva: Int,
+        @Body request: AsignarAmbienteRequest
+    ): Response<MessageResponse>
+
+    @DELETE("api/reservas/{idReserva}/quitar-ambiente")
+    suspend fun quitarAmbiente(
+        @Header("Authorization") token: String,
+        @Path("idReserva") idReserva: Int
+    ): Response<MessageResponse>
 }

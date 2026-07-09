@@ -24,12 +24,14 @@ import com.example.topmejorestiendas.model.ReservaConDetalle
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.EventSeat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReservationsInboxScreen(
     viewModel: ReservationsInboxViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToAsignarAmbiente: (Int, Int) -> Unit = { _, _ -> }
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -74,7 +76,10 @@ fun ReservationsInboxScreen(
                     ReservationCard(
                         reservaDetalle = reservaDetalle,
                         onAccept = { viewModel.updateReservationStatus(reservaDetalle.reserva.id, "CONFIRMADA") },
-                        onReject = { viewModel.updateReservationStatus(reservaDetalle.reserva.id, "RECHAZADA") }
+                        onReject = { viewModel.updateReservationStatus(reservaDetalle.reserva.id, "RECHAZADA") },
+                        onAsignarAmbiente = {
+                            onNavigateToAsignarAmbiente(reservaDetalle.reserva.idNegocio, reservaDetalle.reserva.id)
+                        }
                     )
                 }
             }
@@ -86,7 +91,8 @@ fun ReservationsInboxScreen(
 fun ReservationCard(
     reservaDetalle: ReservaConDetalle,
     onAccept: () -> Unit,
-    onReject: () -> Unit
+    onReject: () -> Unit,
+    onAsignarAmbiente: () -> Unit = {}
 ) {
     val reserva = reservaDetalle.reserva
     Card(
@@ -191,11 +197,43 @@ fun ReservationCard(
             }
             
             if (reserva.estado == "PENDIENTE") {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Asignar ambiente button
+                OutlinedButton(
+                    onClick = onAsignarAmbiente,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = if (reserva.nombreAmbiente != null) Color(0xFFFF8C00) else MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(Icons.Filled.EventSeat, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (reserva.nombreAmbiente != null) "Cambiar ambiente" else "Asignar ambiente",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                // Orange text if ambiente already assigned
+                if (reserva.nombreAmbiente != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "${reserva.nombreAmbiente} asignado",
+                        color = Color(0xFFFF8C00),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
                         onClick = onAccept,
                         modifier = Modifier.weight(1f),
+                        enabled = reserva.nombreAmbiente != null,
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                     ) {
                         Icon(Icons.Filled.Check, contentDescription = "Aceptar")

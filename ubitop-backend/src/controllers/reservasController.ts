@@ -17,6 +17,190 @@ const UpdateEstadoSchema = z.object({
   estado: z.enum(['CONFIRMADA', 'RECHAZADA', 'CANCELADA']),
 });
 
+const AsignarAmbienteSchema = z.object({
+  idAmbiente: z.number().int().positive(),
+  unidadNumero: z.number().int().positive().optional(),
+});
+
+// ─── GET /api/negocios/:idNegocio/ambientes-disponibles ─────
+// Devuelve ambientes con cuentas de unidades libres/total
+export const getAmbientesDisponibles = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const idNegocio = parseInt(req.params.idNegocio);
+
+    // Verificar que el dueño sea el propietario
+    const negocio = await prisma.negocio.findUnique({ where: { id: idNegocio } });
+    if (!negocio || negocio.idDuenio !== req.user!.id) {
+      res.status(403).json({ error: 'No tienes permiso para ver este negocio' });
+      return;
+    }
+
+    const ambientes = await prisma.ambiente.findMany({
+      where: { idNegocio },
+    });
+
+    // Para cada ambiente, contar cuántas unidades están ocupadas
+    const result = await Promise.all(ambientes.map(async (amb) => {
+      const ocupadas = await prisma.reserva.count({
+        where: {
+          idAmbiente: amb.id,
+          estado: { in: ['PENDIENTE', 'CONFIRMADA'] },
+          fechaCreacion: { gte: new Date(new Date().setHours(0, 0, 0, 0)) }, // solo reservas de hoy en adelante
+        },
+      });
+      return {
+        id: amb.id,
+        nombre: amb.nombre,
+        cantidad: amb.cantidad,
+        capacidad: amb.capacidad,
+        libres: amb.cantidad - ocupadas,
+      };
+    }));
+
+    res.status(200).json({ ambientes: result });
+  } catch (error) {
+    console.error('[RESERVAS] getAmbientesDisponibles error:', error);
+    res.status(500).json({ error: 'Error al obtener ambientes disponibles' });
+  }
+};
+
+// ─── POST /api/reservas/:idReserva/asignar-ambiente ─────────
+export const asignarAmbiente = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const idReserva = parseInt(req.params.idReserva);
+    const { idAmbiente, unidadNumero } = AsignarAmbienteSchema.parse(req.body);
+
+    const reserva = await prisma.reserva.findUnique({
+      where: { id: idReserva },
+      include: { negocio: true },
+    });
+
+    if (!reserva) {
+      res.status(404).json({ error: 'Reserva no encontrada' });
+      return;
+    }
+
+    if (reserva.negocio.idDuenio !== req.user!.id) {
+      res.status(403).json({ error: 'No tienes permiso para modificar esta reserva' });
+      return;
+    }
+
+    if (reserva.estado !== 'PENDIENTE') {
+      res.status(400).json({ error: 'Solo se pueden asignar ambientes a reservas pendientes' });
+      return;
+    }
+
+    const ambiente = await prisma.ambiente.findUnique({ where: { id: idAmbiente } });
+    if (!ambiente || ambiente.idNegocio !== reserva.idNegocio) {
+      res.status(400).json({ error: 'Ambiente inválido para este negocio' });
+      return;
+    }
+
+    // Si no se especifica unidadNumero, auto-asignar la primera libre
+    let unidad = unidadNumero;
+    if (!unidad) {
+      const ocupadas = await prisma.reserva.findMany({
+        where: {
+          idAmbiente,
+          estado: { in: ['PENDIENTE', 'CONFIRMADA'] },
+          id: { not: idReserva },
+        },
+        select: { unidadNumero: true },
+      });
+      const numsOcupados = new Set(ocupadas.map(r => r.unidadNumero));
+      for (let i = 1; i <= ambiente.cantidad; i++) {
+        if (!numsOcupados.has(i)) {
+          unidad = i;
+          break;
+        }
+      }
+      if (!unidad) {
+        res.status(409).json({ error: `No hay unidades libres en "${ambiente.nombre}"` });
+        return;
+      }
+    } else {
+      if (unidad < 1 || unidad > ambiente.cantidad) {
+        res.status(400).json({ error: `Número de unidad inválido (1-${ambiente.cantidad})` });
+        return;
+      }
+
+      // Verificar que la unidad no esté ocupada
+      const ocupada = await prisma.reserva.findFirst({
+        where: {
+          idAmbiente,
+          unidadNumero: unidad,
+          estado: { in: ['PENDIENTE', 'CONFIRMADA'] },
+          id: { not: idReserva },
+        },
+      });
+
+      if (ocupada) {
+        res.status(409).json({ error: `La unidad ${unidad} de "${ambiente.nombre}" ya está ocupada` });
+        return;
+      }
+    }
+
+    const updated = await prisma.reserva.update({
+      where: { id: idReserva },
+      data: {
+        idAmbiente,
+        unidadNumero: unidad,
+        nombreAmbiente: ambiente.nombre,
+      },
+    });
+
+    res.status(200).json({ message: 'Ambiente asignado correctamente', reserva: updated });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Datos inválidos', details: error.errors });
+      return;
+    }
+    console.error('[RESERVAS] asignarAmbiente error:', error);
+    res.status(500).json({ error: 'Error al asignar ambiente' });
+  }
+};
+
+// ─── DELETE /api/reservas/:idReserva/quitar-ambiente ─────────
+export const quitarAmbiente = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const idReserva = parseInt(req.params.idReserva);
+
+    const reserva = await prisma.reserva.findUnique({
+      where: { id: idReserva },
+      include: { negocio: true },
+    });
+
+    if (!reserva) {
+      res.status(404).json({ error: 'Reserva no encontrada' });
+      return;
+    }
+
+    if (reserva.negocio.idDuenio !== req.user!.id) {
+      res.status(403).json({ error: 'No tienes permiso para modificar esta reserva' });
+      return;
+    }
+
+    if (!reserva.idAmbiente) {
+      res.status(400).json({ error: 'La reserva no tiene ambiente asignado' });
+      return;
+    }
+
+    const updated = await prisma.reserva.update({
+      where: { id: idReserva },
+      data: {
+        idAmbiente: null,
+        unidadNumero: null,
+        nombreAmbiente: null,
+      },
+    });
+
+    res.status(200).json({ message: 'Ambiente desasignado correctamente', reserva: updated });
+  } catch (error) {
+    console.error('[RESERVAS] quitarAmbiente error:', error);
+    res.status(500).json({ error: 'Error al quitar ambiente' });
+  }
+};
+
 // ─── GET /api/reservas/cliente ───────────────────────────────
 // Historial del cliente autenticado
 export const getReservasCliente = async (req: AuthenticatedRequest, res: Response): Promise<void> => {

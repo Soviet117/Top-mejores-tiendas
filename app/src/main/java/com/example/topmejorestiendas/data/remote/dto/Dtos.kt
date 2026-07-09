@@ -164,6 +164,9 @@ data class ReservaDto(
     @SerializedName("personas") val personas: Int = 1,
     @SerializedName("estado") val estado: String,
     @SerializedName("fechaCreacion") val fechaCreacion: String,
+    @SerializedName("idAmbiente") val idAmbiente: Int? = null,
+    @SerializedName("unidadNumero") val unidadNumero: Int? = null,
+    @SerializedName("nombreAmbiente") val nombreAmbiente: String? = null,
     @SerializedName("negocio") val negocio: NegocioSimpleDto?,
     @SerializedName("usuario") val usuario: ClienteSimpleDto?
 )
@@ -212,6 +215,25 @@ data class AmbienteEntry(
     @SerializedName("nombre") val nombre: String,
     @SerializedName("cantidad") val cantidad: Int,
     @SerializedName("capacidad") val capacidad: Int
+)
+
+// ─── Ambientes Disponibles ───────────────────────────────────
+
+data class AmbienteDisponibleDto(
+    @SerializedName("id") val id: Int,
+    @SerializedName("nombre") val nombre: String,
+    @SerializedName("cantidad") val cantidad: Int,
+    @SerializedName("capacidad") val capacidad: Int,
+    @SerializedName("libres") val libres: Int
+)
+
+data class AmbientesDisponiblesResponse(
+    @SerializedName("ambientes") val ambientes: List<AmbienteDisponibleDto>
+)
+
+data class AsignarAmbienteRequest(
+    @SerializedName("idAmbiente") val idAmbiente: Int,
+    @SerializedName("unidadNumero") val unidadNumero: Int
 )
 
 // ─── Generic ───────────────────────────────────────────────
