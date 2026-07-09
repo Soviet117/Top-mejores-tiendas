@@ -39,13 +39,23 @@ export const getAmbientesDisponibles = async (req: AuthenticatedRequest, res: Re
       where: { idNegocio },
     });
 
-    // Para cada ambiente, contar cuántas unidades están ocupadas
+    // Para cada ambiente, contar cuántas unidades están ocupadas (excluyendo reservas que ya terminaron)
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
     const result = await Promise.all(ambientes.map(async (amb) => {
       const ocupadas = await prisma.reserva.count({
         where: {
           idAmbiente: amb.id,
           estado: { in: ['PENDIENTE', 'CONFIRMADA'] },
-          fechaCreacion: { gte: new Date(new Date().setHours(0, 0, 0, 0)) }, // solo reservas de hoy en adelante
+          OR: [
+            { fecha: { gt: todayStr } },
+            {
+              fecha: todayStr,
+              horaFin: { gt: currentTime },
+            },
+          ],
         },
       });
       return {
@@ -97,6 +107,10 @@ export const asignarAmbiente = async (req: AuthenticatedRequest, res: Response):
     }
 
     // Si no se especifica unidadNumero, auto-asignar la primera libre
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
     let unidad = unidadNumero;
     if (!unidad) {
       const ocupadas = await prisma.reserva.findMany({
@@ -104,6 +118,10 @@ export const asignarAmbiente = async (req: AuthenticatedRequest, res: Response):
           idAmbiente,
           estado: { in: ['PENDIENTE', 'CONFIRMADA'] },
           id: { not: idReserva },
+          OR: [
+            { fecha: { gt: todayStr } },
+            { fecha: todayStr, horaFin: { gt: currentTime } },
+          ],
         },
         select: { unidadNumero: true },
       });
@@ -131,6 +149,10 @@ export const asignarAmbiente = async (req: AuthenticatedRequest, res: Response):
           unidadNumero: unidad,
           estado: { in: ['PENDIENTE', 'CONFIRMADA'] },
           id: { not: idReserva },
+          OR: [
+            { fecha: { gt: todayStr } },
+            { fecha: todayStr, horaFin: { gt: currentTime } },
+          ],
         },
       });
 
