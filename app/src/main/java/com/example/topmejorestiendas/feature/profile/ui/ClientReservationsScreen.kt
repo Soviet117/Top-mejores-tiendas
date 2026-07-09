@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.EventSeat
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
@@ -137,6 +138,19 @@ fun ClientReservationCard(reservaDetalle: ReservaConDetalle) {
                 Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(text = "Personas: ${reserva.personas}", style = MaterialTheme.typography.bodyMedium)
+            }
+
+            if (reserva.nombreAmbiente != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.EventSeat, contentDescription = null, modifier = Modifier.size(20.dp), tint = Color(0xFFFF8C00))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Ambiente: ${reserva.nombreAmbiente}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFFFF8C00)
+                    )
+                }
             }
         }
     }
