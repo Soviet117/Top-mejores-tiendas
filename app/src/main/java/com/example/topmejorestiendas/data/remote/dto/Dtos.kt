@@ -63,14 +63,6 @@ data class MeResponse(
 
 // ─── Negocios ──────────────────────────────────────────────
 
-data class AmbienteDto(
-    @SerializedName("id") val id: Int,
-    @SerializedName("idNegocio") val idNegocio: Int,
-    @SerializedName("nombre") val nombre: String,
-    @SerializedName("cantidad") val cantidad: Int,
-    @SerializedName("capacidad") val capacidad: Int
-)
-
 data class NegocioDto(
     @SerializedName("id") val id: Int,
     @SerializedName("nombreNegocio") val nombreNegocio: String,
@@ -83,10 +75,10 @@ data class NegocioDto(
     @SerializedName("fotoNegocio") val fotoNegocio: String?,
     @SerializedName("descripcion") val descripcion: String?,
     @SerializedName("precios") val precios: String?,
+    @SerializedName("ambientes") val ambientes: List<AmbienteEntry>? = null,
     @SerializedName("idDuenio") val idDuenio: Int,
     @SerializedName("resenas") val resenas: List<ResenaSimpleDto>? = null,
-    @SerializedName("duenio") val duenio: DuenioSimpleDto? = null,
-    @SerializedName("ambientes") val ambientes: List<AmbienteDto>? = null
+    @SerializedName("duenio") val duenio: DuenioSimpleDto? = null
 )
 
 data class DuenioSimpleDto(
@@ -103,12 +95,6 @@ data class NegocioResponse(
     @SerializedName("negocio") val negocio: NegocioDto
 )
 
-data class AmbienteRequestDto(
-    @SerializedName("nombre") val nombre: String,
-    @SerializedName("cantidad") val cantidad: Int,
-    @SerializedName("capacidad") val capacidad: Int
-)
-
 data class CreateNegocioRequest(
     @SerializedName("nombreNegocio") val nombreNegocio: String,
     @SerializedName("rubro") val rubro: String,
@@ -118,8 +104,8 @@ data class CreateNegocioRequest(
     @SerializedName("longitud") val longitud: Double? = null,
     @SerializedName("descripcion") val descripcion: String? = null,
     @SerializedName("precios") val precios: String? = null,
-    @SerializedName("fotoNegocioBase64") val fotoNegocioBase64: String? = null,
-    @SerializedName("ambientes") val ambientes: List<AmbienteRequestDto>? = null
+    @SerializedName("ambientes") val ambientes: String? = null,
+    @SerializedName("fotoNegocioBase64") val fotoNegocioBase64: String? = null
 )
 
 // ─── Reseñas ───────────────────────────────────────────────
@@ -218,6 +204,14 @@ data class UpdateEstadoRequest(
 
 data class PendingCountResponse(
     @SerializedName("count") val count: Int
+)
+
+// ─── Ambientes ────────────────────────────────────────────
+
+data class AmbienteEntry(
+    @SerializedName("nombre") val nombre: String,
+    @SerializedName("cantidad") val cantidad: Int,
+    @SerializedName("capacidad") val capacidad: Int
 )
 
 // ─── Generic ───────────────────────────────────────────────

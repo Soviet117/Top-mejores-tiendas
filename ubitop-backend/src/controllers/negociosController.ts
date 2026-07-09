@@ -5,12 +5,6 @@ import { AuthenticatedRequest } from '../middleware/auth';
 
 const prisma = new PrismaClient();
 
-const AmbienteSchema = z.object({
-  nombre: z.string().min(1, 'El nombre del ambiente es requerido'),
-  cantidad: z.number().int().positive(),
-  capacidad: z.number().int().positive(),
-});
-
 // ─── Esquemas ───────────────────────────────────────────────
 const CreateNegocioSchema = z.object({
   nombreNegocio: z.string().min(1, 'El nombre es requerido'),
@@ -21,8 +15,8 @@ const CreateNegocioSchema = z.object({
   longitud: z.number().optional(),
   descripcion: z.string().optional(),
   precios: z.string().optional(),       // JSON string
+  ambientes: z.string().optional(),     // JSON string
   fotoNegocioBase64: z.string().optional(), // Imagen en base64
-  ambientes: z.array(AmbienteSchema).optional(),
 });
 
 const UpdateNegocioSchema = CreateNegocioSchema.partial();
@@ -48,6 +42,7 @@ export const getNegocios = async (req: AuthenticatedRequest, res: Response): Pro
             costos: true,
           },
         },
+        ambientes: true,
       },
     });
 
@@ -95,6 +90,14 @@ export const getNegocioById = async (req: AuthenticatedRequest, res: Response): 
 export const createNegocio = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const data = CreateNegocioSchema.parse(req.body);
+
+    let ambientesData: { nombre: string; cantidad: number; capacidad: number }[] = [];
+    if (data.ambientes) {
+      try {
+        ambientesData = JSON.parse(data.ambientes);
+      } catch { /* invalid JSON, ignorar */ }
+    }
+
     const negocio = await prisma.negocio.create({
       data: {
         nombreNegocio: data.nombreNegocio,
@@ -107,9 +110,9 @@ export const createNegocio = async (req: AuthenticatedRequest, res: Response): P
         precios: data.precios,
         fotoNegocio: data.fotoNegocioBase64,
         idDuenio: req.user!.id,
-        ambientes: data.ambientes
-          ? { create: data.ambientes }
-          : undefined,
+        ambientes: {
+          create: ambientesData,
+        },
       },
       include: { ambientes: true },
     });
@@ -138,26 +141,32 @@ export const updateNegocio = async (req: AuthenticatedRequest, res: Response): P
       return;
     }
 
-    const updateData: any = {
-      nombreNegocio: data.nombreNegocio,
-      rubro: data.rubro,
-      direccion: data.direccion,
-      horario: data.horario,
-      latitud: data.latitud,
-      longitud: data.longitud,
-      descripcion: data.descripcion,
-      precios: data.precios,
-      ...(data.fotoNegocioBase64 ? { fotoNegocio: data.fotoNegocioBase64 } : {}),
-    };
-
-    if (data.ambientes !== undefined) {
-      await prisma.ambiente.deleteMany({ where: { idNegocio: id } });
-      updateData.ambientes = { create: data.ambientes };
+    let ambientesData: { nombre: string; cantidad: number; capacidad: number }[] = [];
+    if (data.ambientes) {
+      try {
+        ambientesData = JSON.parse(data.ambientes);
+      } catch { /* invalid JSON, ignorar */ }
     }
 
     const updated = await prisma.negocio.update({
       where: { id },
-      data: updateData,
+      data: {
+        nombreNegocio: data.nombreNegocio,
+        rubro: data.rubro,
+        direccion: data.direccion,
+        horario: data.horario,
+        latitud: data.latitud,
+        longitud: data.longitud,
+        descripcion: data.descripcion,
+        precios: data.precios,
+        ...(data.fotoNegocioBase64 ? { fotoNegocio: data.fotoNegocioBase64 } : {}),
+        ...(data.ambientes !== undefined ? {
+          ambientes: {
+            deleteMany: {},
+            create: ambientesData,
+          },
+        } : {}),
+      },
       include: { ambientes: true },
     });
 
@@ -199,6 +208,7 @@ export const getMisNegocios = async (req: AuthenticatedRequest, res: Response): 
       where: { idDuenio: req.user!.id },
       include: {
         resenas: { select: { calificacion: true } },
+        ambientes: true,
       },
       orderBy: { createdAt: 'desc' },
     });
