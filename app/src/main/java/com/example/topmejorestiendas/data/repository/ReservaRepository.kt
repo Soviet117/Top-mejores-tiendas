@@ -60,7 +60,8 @@ class ReservaRepository(context: Context) {
         idNegocio: Int,
         fecha: String,
         horaInicio: String,
-        horaFin: String
+        horaFin: String,
+        personas: Int = 1
     ): Result<Unit> {
         return try {
             val response = api.createReserva(
@@ -69,7 +70,8 @@ class ReservaRepository(context: Context) {
                     idNegocio = idNegocio,
                     fecha = fecha,
                     horaInicio = horaInicio,
-                    horaFin = horaFin
+                    horaFin = horaFin,
+                    personas = personas
                 )
             )
             if (response.isSuccessful) {

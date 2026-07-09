@@ -159,6 +159,7 @@ data class ReservaDto(
     @SerializedName("fecha") val fecha: String,
     @SerializedName("horaInicio") val horaInicio: String,
     @SerializedName("horaFin") val horaFin: String,
+    @SerializedName("personas") val personas: Int = 1,
     @SerializedName("estado") val estado: String,
     @SerializedName("fechaCreacion") val fechaCreacion: String,
     @SerializedName("negocio") val negocio: NegocioSimpleDto?,
@@ -189,7 +190,8 @@ data class CreateReservaRequest(
     @SerializedName("idNegocio") val idNegocio: Int,
     @SerializedName("fecha") val fecha: String,
     @SerializedName("horaInicio") val horaInicio: String,
-    @SerializedName("horaFin") val horaFin: String
+    @SerializedName("horaFin") val horaFin: String,
+    @SerializedName("personas") val personas: Int = 1
 )
 
 data class UpdateEstadoRequest(
