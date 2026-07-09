@@ -28,6 +28,10 @@ public class Reserva {
     
     public long fechaCreacion;
 
+    public Integer idAmbiente;
+    public Integer unidadNumero;
+    public String nombreAmbiente;
+
     public Reserva(int idNegocio, int idUsuario, String fecha, String horaInicio, String horaFin, int personas, String estado, long fechaCreacion) {
         this.idNegocio = idNegocio;
         this.idUsuario = idUsuario;

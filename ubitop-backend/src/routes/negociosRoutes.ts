@@ -8,6 +8,7 @@ import {
   getMisNegocios,
   getQrToken,
 } from '../controllers/negociosController';
+import { getAmbientesDisponibles } from '../controllers/reservasController';
 import { requireAuth, requireOwner } from '../middleware/auth';
 
 export const negociosRoutes = Router();
@@ -20,6 +21,9 @@ negociosRoutes.get('/mios', requireAuth, requireOwner, getMisNegocios);
 
 // GET /api/negocios/:id/qr-token  (solo dueño del negocio, ANTES de /:id)
 negociosRoutes.get('/:id/qr-token', requireAuth, requireOwner, getQrToken);
+
+// GET /api/negocios/:idNegocio/ambientes-disponibles  (solo dueño, ANTES de /:id)
+negociosRoutes.get('/:idNegocio/ambientes-disponibles', requireAuth, requireOwner, getAmbientesDisponibles);
 
 // GET /api/negocios/:id  (público)
 negociosRoutes.get('/:id', getNegocioById);
